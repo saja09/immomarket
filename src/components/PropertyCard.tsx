@@ -1,59 +1,93 @@
-import { Building2, MapPin, Ruler } from "lucide-react"
+import React from "react"
 
-export default function PropertyCard({ property }) {
-  return (
-    <article className="overflow-hidden rounded-[28px] bg-white shadow-[0_16px_35px_rgba(0,0,0,0.08)]">
+type Property = {
+id:number
+title:string
+city:string
+district:string
+area:string
+price:string
+image:string
+}
 
-      <img
-        src={property.image}
-        className="h-[210px] w-full object-cover"
-      />
+export default function PropertyCard({property}:{property:Property}){
 
-      <div className="p-5 text-right">
+const openDetails = ()=>{
+alert("تفاصيل العقار")
+}
 
-        <h3 className="text-[20px] font-extrabold text-[#06142f]">
-          {property.title}
-        </h3>
+const toggleFavorite = (e:any)=>{
+e.stopPropagation()
+alert("تم حفظ العقار")
+}
 
-        <div className="mt-4 grid grid-cols-3 gap-3">
+return(
 
-          <div className="rounded-xl bg-slate-50 p-3 text-center">
-            <Building2 size={18} className="mx-auto mb-1" />
-            <p className="text-[13px] font-bold">
-              {property.city}
-            </p>
-          </div>
+<div
+className="bg-white rounded-3xl shadow-md overflow-hidden mb-6"
+>
 
-          <div className="rounded-xl bg-slate-50 p-3 text-center">
-            <MapPin size={18} className="mx-auto mb-1" />
-            <p className="text-[13px] font-bold">
-              {property.district}
-            </p>
-          </div>
+<div
+className="relative cursor-pointer"
+onClick={openDetails}
+>
 
-          <div className="rounded-xl bg-slate-50 p-3 text-center">
-            <Ruler size={18} className="mx-auto mb-1" />
-            <p className="text-[13px] font-bold">
-              {property.area} m²
-            </p>
-          </div>
+<img
+src={property.image}
+className="w-full h-56 object-cover"
+/>
 
-        </div>
+<button
+onClick={toggleFavorite}
+className="absolute top-3 right-3 bg-white w-10 h-10 rounded-full shadow flex items-center justify-center text-xl"
+>
+❤️
+</button>
 
-        <div className="mt-5 flex items-center justify-between">
+<div
+className="absolute bottom-3 left-3 bg-white px-4 py-2 rounded-full text-blue-600 font-bold"
+>
+{property.price}
+</div>
 
-          <button className="rounded-full bg-[#06142f] px-5 py-2 text-[14px] font-bold text-white">
-            التفاصيل
-          </button>
+</div>
 
-          <p className="text-[26px] font-black text-[#2563eb]">
-            {property.price}
-          </p>
+<div className="p-5">
 
-        </div>
+<h2 className="text-lg font-bold text-center mb-4">
+{property.title}
+</h2>
 
-      </div>
+<div className="grid grid-cols-3 gap-3 text-center">
 
-    </article>
-  )
+<div className="bg-gray-100 rounded-xl p-3">
+📏
+<p className="text-sm">{property.area}</p>
+</div>
+
+<div className="bg-gray-100 rounded-xl p-3">
+📍
+<p className="text-sm">{property.district}</p>
+</div>
+
+<div className="bg-gray-100 rounded-xl p-3">
+🏙
+<p className="text-sm">{property.city}</p>
+</div>
+
+</div>
+
+<button
+onClick={openDetails}
+className="mt-5 w-full bg-blue-900 text-white py-3 rounded-xl"
+>
+التفاصيل
+</button>
+
+</div>
+
+</div>
+
+)
+
 }

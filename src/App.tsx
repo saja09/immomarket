@@ -1,18 +1,14 @@
 import { useState } from "react"
 import {
-  Search,
-  Mic,
-  MapPinned,
-  SlidersHorizontal,
   Building2,
   MapPin,
+  Phone,
   Ruler,
-  UserRound,
-  X,
-  Mail,
-  Lock,
-  ArrowLeft,
+  ArrowRight,
+  MessageCircle,
+  User,
 } from "lucide-react"
+import SearchBar from "./components/SearchBar"
 
 type Property = {
   id: number
@@ -22,7 +18,7 @@ type Property = {
   area: number
   price: string
   image: string
-  featured?: boolean
+  description: string
 }
 
 const properties: Property[] = [
@@ -35,238 +31,254 @@ const properties: Property[] = [
     price: "2,500,000 DH",
     image:
       "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=80",
-    featured: true,
+    description:
+      "فيلا راقية بتصميم عصري، تشطيبات ممتازة، وإضاءة طبيعية قوية، وقريبة من مختلف الخدمات الأساسية.",
+  },
+  {
+    id: 2,
+    title: "شقة للبيع بتصميم عصري",
+    city: "سلا",
+    district: "بطانة",
+    area: 96,
+    price: "850,000 DH",
+    image:
+      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
+    description:
+      "شقة حديثة ومريحة، مناسبة للسكن العائلي، بتوزيع داخلي ممتاز وموقع قريب من المرافق الضرورية.",
+  },
+  {
+    id: 3,
+    title: "شقة اقتصادية ومناسبة",
+    city: "الخميسات",
+    district: "وسط المدينة",
+    area: 74,
+    price: "540,000 DH",
+    image:
+      "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1200&q=80",
+    description:
+      "شقة اقتصادية مناسبة للسكن أو الاستثمار، في حي هادئ وبقرب وسائل النقل والمحلات.",
   },
 ]
 
-function BrandHeader({ onOpenAuth }: { onOpenAuth: () => void }) {
+function Header() {
   return (
-    <header className="border-b border-slate-200/70 bg-white/95 backdrop-blur">
-      <div className="mx-auto max-w-md px-4 py-5">
-        <div className="rounded-[30px] border border-slate-200 bg-white px-4 py-4 shadow">
+    <header className="mx-auto mt-4 max-w-md px-4">
+      <div className="flex items-center justify-between rounded-[28px] bg-white px-5 py-4 shadow-[0_12px_30px_rgba(0,0,0,0.08)]">
+        <button className="flex items-center gap-2 rounded-full border border-slate-200 px-5 py-3 text-[15px] font-bold text-[#06142f]">
+          <User size={18} />
+          الدخول
+        </button>
 
-          <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <h1 className="text-[30px] font-black tracking-tight text-[#06142f]">
+            ImmoMarket
+          </h1>
 
-            <button
-              onClick={onOpenAuth}
-              className="flex h-11 items-center gap-2 rounded-full border border-slate-200 bg-[#f8fafc] px-4 text-[13px] font-extrabold text-[#06142f]"
-            >
-              <UserRound size={16} />
-              الدخول
-            </button>
-
-            <div className="flex items-center gap-3">
-
-              <h1 className="text-[30px] font-black text-[#06142f]">
-                ImmoMarket
-              </h1>
-
-              <div className="flex h-16 w-16 items-center justify-center rounded-[20px] bg-gradient-to-br from-[#06142f] to-[#0a2b63]">
-                <div className="flex h-[50px] w-[50px] items-center justify-center rounded-[16px] bg-white/10 text-[25px] font-black text-white">
-                  IM
-                </div>
-              </div>
-
-            </div>
-
+          <div className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-gradient-to-br from-[#06142f] to-[#0a2b63] shadow">
+            <span className="text-[18px] font-black text-white">IM</span>
           </div>
-
         </div>
       </div>
     </header>
   )
 }
 
-function AuthDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+function PropertyCard({
+  property,
+  onOpen,
+}: {
+  property: Property
+  onOpen: (property: Property) => void
+}) {
   return (
-    <>
-      <div
-        className={`fixed inset-0 bg-black/30 ${
-          open ? "block" : "hidden"
-        }`}
-        onClick={onClose}
-      />
-
-      <div
-        className={`fixed top-0 left-0 right-0 mx-auto max-w-md transform ${
-          open ? "translate-y-0" : "-translate-y-full"
-        } transition`}
+    <article className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+      <button
+        type="button"
+        onClick={() => onOpen(property)}
+        className="block w-full text-right"
       >
-        <div className="m-4 rounded-[30px] bg-white p-5 shadow-xl">
+        <img
+          src={property.image}
+          alt={property.title}
+          className="h-[230px] w-full object-cover transition active:scale-[0.99]"
+        />
+      </button>
 
-          <div className="mb-4 flex justify-between items-center">
-
-            <button
-              onClick={onClose}
-              className="flex h-10 w-10 items-center justify-center rounded-full border"
-            >
-              <X size={18} />
-            </button>
-
-            <h2 className="text-[22px] font-black">
-              تسجيل الدخول
-            </h2>
-
-          </div>
-
-          <div className="space-y-3">
-
-            <input
-              type="email"
-              placeholder="البريد الإلكتروني"
-              className="h-12 w-full rounded-xl border px-4 text-right"
-            />
-
-            <input
-              type="password"
-              placeholder="كلمة المرور"
-              className="h-12 w-full rounded-xl border px-4 text-right"
-            />
-
-            <button className="h-12 w-full rounded-full bg-[#06142f] text-white font-bold">
-              تسجيل الدخول
-            </button>
-
-            <div className="text-center pt-2">
-
-              <span className="text-slate-500">
-                ليس لديك حساب؟
-              </span>
-
-              <button className="mr-2 text-blue-600 font-bold">
-                إنشاء حساب جديد
-              </button>
-
-            </div>
-
-          </div>
-
-        </div>
-      </div>
-    </>
-  )
-}
-
-function SearchBar() {
-  return (
-    <section className="mx-auto max-w-md px-4 pt-5">
-      <div className="rounded-[28px] border bg-white p-3 shadow">
-        <div className="flex items-center gap-2">
-
-          <button className="h-10 w-10 rounded-full bg-[#06142f] text-white flex items-center justify-center">
-            <Search size={18} />
-          </button>
-
-          <input
-            type="text"
-            placeholder="ابحث عن مدينة"
-            className="flex-1 h-10 rounded-full border px-4 text-right"
-          />
-
-          <button className="h-10 w-10 rounded-full border flex items-center justify-center">
-            <Mic size={16} />
-          </button>
-
-          <button className="h-10 w-10 rounded-full border flex items-center justify-center">
-            <MapPinned size={16} />
-          </button>
-
-          <button className="h-10 w-10 rounded-full border flex items-center justify-center">
-            <SlidersHorizontal size={16} />
-          </button>
-
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function PropertyCard({ property }: { property: Property }) {
-  return (
-    <article className="rounded-[24px] bg-white shadow overflow-hidden">
-
-      <img
-        src={property.image}
-        className="h-[200px] w-full object-cover"
-      />
-
-      <div className="p-4 text-right">
-
-        <h3 className="text-[20px] font-bold">
+      <div className="p-5 text-right">
+        <h3 className="text-[21px] font-extrabold leading-snug text-[#06142f]">
           {property.title}
         </h3>
 
-        <div className="mt-3 grid grid-cols-3 gap-2">
-
-          <div className="bg-slate-50 p-3 rounded text-center">
-            <Building2 size={16} />
-            <p className="text-[12px]">{property.city}</p>
+        <div className="mt-4 grid grid-cols-3 gap-3">
+          <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
+            <Ruler size={18} className="mx-auto mb-2 text-slate-500" />
+            <p className="text-[11px] font-bold text-slate-400">المساحة</p>
+            <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">
+              {property.area} m²
+            </p>
           </div>
 
-          <div className="bg-slate-50 p-3 rounded text-center">
-            <MapPin size={16} />
-            <p className="text-[12px]">{property.district}</p>
+          <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
+            <MapPin size={18} className="mx-auto mb-2 text-slate-500" />
+            <p className="text-[11px] font-bold text-slate-400">الحي</p>
+            <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">
+              {property.district}
+            </p>
           </div>
 
-          <div className="bg-slate-50 p-3 rounded text-center">
-            <Ruler size={16} />
-            <p className="text-[12px]">{property.area} m²</p>
+          <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
+            <Building2 size={18} className="mx-auto mb-2 text-slate-500" />
+            <p className="text-[11px] font-bold text-slate-400">المدينة</p>
+            <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">
+              {property.city}
+            </p>
           </div>
-
         </div>
 
-        <div className="mt-3 flex justify-between items-center">
-
-          <p className="text-blue-600 font-black text-[20px]">
-            {property.price}
-          </p>
-
-          <button className="rounded-full bg-[#06142f] px-4 py-2 text-white text-sm">
+        <div className="mt-5 flex items-end justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => onOpen(property)}
+            className="rounded-full bg-[#06142f] px-5 py-3 text-[15px] font-bold text-white shadow-[0_10px_24px_rgba(6,20,47,0.14)]"
+          >
             التفاصيل
           </button>
 
+          <div className="text-right">
+            <p className="text-[11px] font-bold text-slate-400">السعر</p>
+            <p className="text-[28px] font-black leading-none text-[#2563eb]">
+              {property.price}
+            </p>
+          </div>
         </div>
-
       </div>
-
     </article>
   )
 }
 
+function PropertyDetails({
+  property,
+  onBack,
+}: {
+  property: Property
+  onBack: () => void
+}) {
+  return (
+    <main className="mx-auto max-w-md px-4 pb-16 pt-4">
+      <button
+        type="button"
+        onClick={onBack}
+        className="mb-4 flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[14px] font-bold text-[#06142f] shadow"
+      >
+        <ArrowRight size={16} />
+        رجوع
+      </button>
+
+      <article className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+        <img
+          src={property.image}
+          alt={property.title}
+          className="h-[260px] w-full object-cover"
+        />
+
+        <div className="p-5 text-right">
+          <h2 className="text-[28px] font-black leading-tight text-[#06142f]">
+            {property.title}
+          </h2>
+
+          <p className="mt-3 text-[34px] font-black text-[#2563eb]">
+            {property.price}
+          </p>
+
+          <div className="mt-5 grid grid-cols-3 gap-3">
+            <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
+              <Ruler size={18} className="mx-auto mb-2 text-slate-500" />
+              <p className="text-[11px] font-bold text-slate-400">المساحة</p>
+              <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">
+                {property.area} m²
+              </p>
+            </div>
+
+            <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
+              <MapPin size={18} className="mx-auto mb-2 text-slate-500" />
+              <p className="text-[11px] font-bold text-slate-400">الحي</p>
+              <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">
+                {property.district}
+              </p>
+            </div>
+
+            <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
+              <Building2 size={18} className="mx-auto mb-2 text-slate-500" />
+              <p className="text-[11px] font-bold text-slate-400">المدينة</p>
+              <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">
+                {property.city}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-[22px] bg-slate-50 p-4">
+            <p className="text-[13px] font-bold text-slate-400">الوصف</p>
+            <p className="mt-2 text-[16px] leading-8 text-[#06142f]">
+              {property.description}
+            </p>
+          </div>
+
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <a
+              href="https://wa.me/212678927276"
+              className="flex items-center justify-center gap-2 rounded-full bg-[#22c55e] px-4 py-3 text-[15px] font-bold text-white"
+            >
+              <MessageCircle size={18} />
+              واتساب
+            </a>
+
+            <a
+              href="tel:+212678927276"
+              className="flex items-center justify-center gap-2 rounded-full bg-[#06142f] px-4 py-3 text-[15px] font-bold text-white"
+            >
+              <Phone size={18} />
+              اتصال
+            </a>
+          </div>
+        </div>
+      </article>
+    </main>
+  )
+}
+
 export default function App() {
-  const [authOpen, setAuthOpen] = useState(false)
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null)
 
   return (
-    <div className="min-h-screen bg-[#f3f5fb]" dir="rtl">
+    <div className="min-h-screen bg-[#f3f5fb] text-[#06142f]" dir="rtl">
+      <Header />
 
-      <BrandHeader onOpenAuth={() => setAuthOpen(true)} />
+      {selectedProperty ? (
+        <PropertyDetails
+          property={selectedProperty}
+          onBack={() => setSelectedProperty(null)}
+        />
+      ) : (
+        <>
+          <SearchBar />
 
-      <AuthDrawer
-        open={authOpen}
-        onClose={() => setAuthOpen(false)}
-      />
+          <main className="mx-auto mt-8 max-w-md px-4 pb-16">
+            <h2 className="mb-5 text-right text-[34px] font-black tracking-tight text-[#06142f]">
+              العقارات المتوفرة
+            </h2>
 
-      <SearchBar />
-
-      <main className="mx-auto max-w-md px-4 pt-7">
-
-        <h2 className="text-[28px] font-black text-right mb-5">
-          العقارات المتوفرة
-        </h2>
-
-        <div className="grid gap-4">
-
-          {properties.map((property) => (
-            <PropertyCard
-              key={property.id}
-              property={property}
-            />
-          ))}
-
-        </div>
-
-      </main>
-
+            <div className="grid gap-6">
+              {properties.map((property) => (
+                <PropertyCard
+                  key={property.id}
+                  property={property}
+                  onOpen={setSelectedProperty}
+                />
+              ))}
+            </div>
+          </main>
+        </>
+      )}
     </div>
   )
 }
