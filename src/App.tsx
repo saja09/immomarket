@@ -7,6 +7,8 @@ import {
   ArrowRight,
   MessageCircle,
   User,
+  Bot,
+  Volume2,
 } from "lucide-react"
 import SearchBar from "./components/SearchBar"
 import Login from "./pages/Login"
@@ -29,16 +31,19 @@ type SavedUser = {
   password: string
 }
 
+type SortMode = "cheap" | "luxury" | "best" | null
+
 type ParsedSearch = {
   raw: string
   normalized: string
-  propertyType: "شقة" | "فيلا" | null
+  propertyType: "شقة" | "فيلا" | "منزل" | "استوديو" | null
   city: string | null
   district: string | null
   minPriceDh: number | null
   maxPriceDh: number | null
   maxArea: number | null
   minArea: number | null
+  sortMode: SortMode
   explanation: string[]
 }
 
@@ -90,6 +95,9 @@ function normalizeArabic(text: string) {
     .replace(/ى/g, "ي")
     .replace(/ؤ/g, "و")
     .replace(/ئ/g, "ي")
+    .replace(/گ/g, "ك")
+    .replace(/ڤ/g, "ف")
+    .replace(/چ/g, "ج")
     .replace(/[^\u0600-\u06FF0-9a-zA-Z\s]/g, " ")
     .replace(/\s+/g, " ")
 }
@@ -103,67 +111,242 @@ function priceStringToDh(price: string) {
   return Number(digits || 0)
 }
 
-// 1 مليون بالسنتيم = 10,000 درهم
 function millionCentimesToDh(value: number) {
   return value * 10000
+}
+
+const cityAliases: Record<string, string[]> = {
+  الرباط: ["الرباط", "رباط", "rabat"],
+  سلا: ["سلا", "sale", "salé"],
+  الخميسات: ["الخميسات", "خميسات", "khemisset", "khemissat"],
+}
+
+const districtAliases: Record<string, string[]> = {
+  "حي الرياض": ["حي الرياض", "الرياض", "hay riad", "riad"],
+  بطانة: ["بطانة", "بطانه", "bettana"],
+  "وسط المدينة": ["وسط المدينة", "وسط المدينه", "centre ville", "center"],
+}
+
+const propertyTypeAliases: Record<"شقة" | "فيلا" | "منزل" | "استوديو", string[]> = {
+  شقة: ["شقة", "شقه", "شقق", "appartement", "apartment", "apt"],
+  فيلا: ["فيلا", "villa", "villas"],
+  منزل: ["دار", "منزل", "بيت", "maison", "house", "home"],
+  استوديو: ["ستوديو", "استوديو", "studio"],
+}
+
+const cheapWords = [
+  "ارخص",
+  "رخيص",
+  "رخيصة",
+  "رخاص",
+  "الهوتة",
+  "هوتة",
+  "الهوتات",
+  "هوتات",
+  "ثمن مناسب",
+  "اقتصادي",
+  "اقتصادية",
+  "جيبلي الهوتات",
+  "جيبلي الهوتات لعندك",
+]
+
+const luxuryWords = [
+  "افخم",
+  "فخم",
+  "فاخر",
+  "فاخرة",
+  "ارقى",
+  "راقي",
+  "راقية",
+  "طوب",
+  "luxury",
+  "premium",
+]
+
+const bestWords = [
+  "احسن",
+  "أفضل",
+  "افضل",
+  "مزيان",
+  "زوين",
+  "top",
+  "ممتاز",
+  "ممتازه",
+]
+
+const stopWords = [
+  "اريد",
+  "أريد",
+  "ابحت",
+  "أبحث",
+  "ابحث",
+  "بغيت",
+  "بغينا",
+  "عطيني",
+  "عطي",
+  "عرض",
+  "عرضلي",
+  "عرضليا",
+  "اعرض",
+  "اعرضلي",
+  "اعرضليا",
+  "وريني",
+  "وري",
+  "جيب",
+  "جيبلي",
+  "جيبليا",
+  "دبر",
+  "دبرلي",
+  "دبرليا",
+  "قلب",
+  "قلبلي",
+  "قلبليا",
+  "كنقلب",
+  "كنقلبو",
+  "على",
+  "في",
+  "فال",
+  "ف",
+  "ديال",
+  "ل",
+  "لي",
+  "ليا",
+  "عندي",
+  "شنو",
+  "واش",
+  "ما",
+  "بين",
+  "مابين",
+  "الى",
+  "الي",
+  "حتى",
+  "اقل",
+  "اكثر",
+  "من",
+  "فوق",
+  "تحت",
+  "دون",
+  "بحدود",
+  "حدود",
+  "تقريبا",
+  "حوالي",
+  "في حي",
+  "حي",
+  "مليون",
+  "ملايين",
+  "درهم",
+  "dh",
+  "متر",
+  "مترمربع",
+  "مربع",
+  "سنتيم",
+  "سنتيمات",
+  "ميزانيتي",
+  "الثمن",
+  "السعر",
+  "بثمن",
+  "ارخص",
+  "رخيص",
+  "رخيصة",
+  "الهوتة",
+  "هوتة",
+  "الهوتات",
+  "هوتات",
+  "افخم",
+  "فخم",
+  "فاخر",
+  "فاخرة",
+  "ارقى",
+  "راقي",
+  "راقية",
+  "طوب",
+  "احسن",
+  "افضل",
+  "أفضل",
+]
+
+function includesAny(normalizedQuery: string, words: string[]) {
+  return words.some((word) => normalizedQuery.includes(normalizeArabic(word)))
+}
+
+function extractCanonicalValue(
+  normalizedQuery: string,
+  aliasesMap: Record<string, string[]>
+) {
+  for (const [canonical, aliases] of Object.entries(aliasesMap)) {
+    for (const alias of aliases) {
+      if (normalizedQuery.includes(normalizeArabic(alias))) {
+        return canonical
+      }
+    }
+  }
+  return null
 }
 
 function parseSmartQuery(query: string): ParsedSearch {
   const normalized = normalizeArabic(query)
   const explanation: string[] = []
 
-  let propertyType: "شقة" | "فيلا" | null = null
-  if (normalized.includes("شقه")) {
-    propertyType = "شقة"
-    explanation.push("نوع العقار: شقة")
-  } else if (normalized.includes("فيلا")) {
-    propertyType = "فيلا"
-    explanation.push("نوع العقار: فيلا")
+  let propertyType: "شقة" | "فيلا" | "منزل" | "استوديو" | null = null
+  const detectedPropertyType = extractCanonicalValue(normalized, propertyTypeAliases)
+  if (
+    detectedPropertyType === "شقة" ||
+    detectedPropertyType === "فيلا" ||
+    detectedPropertyType === "منزل" ||
+    detectedPropertyType === "استوديو"
+  ) {
+    propertyType = detectedPropertyType
+    explanation.push(`نوع العقار: ${propertyType}`)
   }
 
-  let city: string | null = null
-  const knownCities = ["الرباط", "سلا", "الخميسات"]
-  for (const c of knownCities) {
-    if (normalized.includes(normalizeArabic(c))) {
-      city = c
-      explanation.push(`المدينة: ${c}`)
-      break
-    }
-  }
+  const city = extractCanonicalValue(normalized, cityAliases)
+  if (city) explanation.push(`المدينة: ${city}`)
 
-  let district: string | null = null
-  const knownDistricts = ["حي الرياض", "بطانة", "وسط المدينة"]
-  for (const d of knownDistricts) {
-    if (normalized.includes(normalizeArabic(d))) {
-      district = d
-      explanation.push(`الحي: ${d}`)
-      break
-    }
+  const district = extractCanonicalValue(normalized, districtAliases)
+  if (district) explanation.push(`الحي: ${district}`)
+
+  let sortMode: SortMode = null
+  if (includesAny(normalized, cheapWords)) {
+    sortMode = "cheap"
+    explanation.push("الترتيب: الأرخص أولاً")
+  } else if (includesAny(normalized, luxuryWords)) {
+    sortMode = "luxury"
+    explanation.push("الترتيب: الأفخم / الأرقى أولاً")
+  } else if (includesAny(normalized, bestWords)) {
+    sortMode = "best"
+    explanation.push("الترتيب: الأحسن أولاً")
   }
 
   let minPriceDh: number | null = null
   let maxPriceDh: number | null = null
 
   const betweenMillionMatch =
-    normalized.match(/(?:ما ?بين|بين)\s*(\d+)\s*(?:و|الى|الي|حتى|-)\s*(\d+)\s*مليون/) ||
-    normalized.match(/(\d+)\s*(?:و|الى|الي|حتى|-)\s*(\d+)\s*مليون/)
+    normalized.match(/(?:ما ?بين|بين)\s*(\d+)\s*(?:و|الى|الي|حتى|-)\s*(\d+)\s*(?:مليون|ملايين)?/) ||
+    normalized.match(/(\d+)\s*(?:و|الى|الي|حتى|-)\s*(\d+)\s*(?:مليون|ملايين)/)
 
   if (betweenMillionMatch) {
     const first = Number(betweenMillionMatch[1])
     const second = Number(betweenMillionMatch[2])
     minPriceDh = millionCentimesToDh(Math.min(first, second))
     maxPriceDh = millionCentimesToDh(Math.max(first, second))
-    explanation.push(`الثمن: بين ${formatDh(minPriceDh)} و ${formatDh(maxPriceDh)} (تم التحويل من السنتيم)`)
+    explanation.push(
+      `الثمن: بين ${formatDh(minPriceDh)} و ${formatDh(maxPriceDh)} (تم التحويل من السنتيم)`
+    )
   } else {
-    const lessThanMatch = normalized.match(/(?:اقل من|اقل|تحت|دون)\s*(\d+)\s*مليون/)
-    const moreThanMatch = normalized.match(/(?:اكثر من|فوق|فوق ?من|ابتداء من)\s*(\d+)\s*مليون/)
-    const exactMillionMatch = normalized.match(/(\d+)\s*مليون/)
+    const lessThanMillionMatch =
+      normalized.match(/(?:اقل من|ما يفوتش|ما تفوتش|تحت|دون|بحدود|في حدود|حدود|تقريبا|حوالي)\s*(\d+)\s*(?:مليون|ملايين)?/)
 
-    if (lessThanMatch) {
-      maxPriceDh = millionCentimesToDh(Number(lessThanMatch[1]))
+    const moreThanMillionMatch =
+      normalized.match(/(?:اكثر من|فوق|فوق من|ابتداء من|بدايه من)\s*(\d+)\s*(?:مليون|ملايين)?/)
+
+    const exactMillionMatch =
+      normalized.match(/(?:بثمن|الثمن|السعر)?\s*(\d+)\s*(?:مليون|ملايين)/)
+
+    if (lessThanMillionMatch) {
+      maxPriceDh = millionCentimesToDh(Number(lessThanMillionMatch[1]))
       explanation.push(`الثمن الأقصى: ${formatDh(maxPriceDh)} (تم التحويل من السنتيم)`)
-    } else if (moreThanMatch) {
-      minPriceDh = millionCentimesToDh(Number(moreThanMatch[1]))
+    } else if (moreThanMillionMatch) {
+      minPriceDh = millionCentimesToDh(Number(moreThanMillionMatch[1]))
       explanation.push(`الثمن الأدنى: ${formatDh(minPriceDh)} (تم التحويل من السنتيم)`)
     } else if (exactMillionMatch) {
       const exactDh = millionCentimesToDh(Number(exactMillionMatch[1]))
@@ -173,23 +356,33 @@ function parseSmartQuery(query: string): ParsedSearch {
     }
   }
 
-  let maxArea: number | null = null
   let minArea: number | null = null
+  let maxArea: number | null = null
 
   const betweenAreaMatch =
-    normalized.match(/(?:ما ?بين|بين)\s*(\d+)\s*(?:و|الى|الي|حتى|-)\s*(\d+)\s*(?:متر|متر مربع|متر مربعه)?/)
+    normalized.match(/(?:ما ?بين|بين)\s*(\d+)\s*(?:و|الى|الي|حتى|-)\s*(\d+)\s*(?:متر|متر مربع|مربع)?/)
 
   if (betweenAreaMatch) {
     minArea = Math.min(Number(betweenAreaMatch[1]), Number(betweenAreaMatch[2]))
     maxArea = Math.max(Number(betweenAreaMatch[1]), Number(betweenAreaMatch[2]))
-    if (minArea > 0 && maxArea > 0) {
-      explanation.push(`المساحة: بين ${minArea} و ${maxArea} متر`)
-    }
+    explanation.push(`المساحة: بين ${minArea} و ${maxArea} متر`)
   } else {
-    const exactAreaMatch = normalized.match(/(\d+)\s*(?:متر|متر مربع|متر مربعه)/)
-    if (exactAreaMatch) {
+    const exactAreaMatch = normalized.match(/(\d+)\s*(?:متر|متر مربع|مربع)/)
+    const lessAreaMatch =
+      normalized.match(/(?:اقل من|ما يفوتش|ما تفوتش|تحت|دون|بحدود|في حدود|حدود|تقريبا|حوالي)\s*(\d+)\s*(?:متر|متر مربع|مربع)/)
+    const moreAreaMatch =
+      normalized.match(/(?:اكثر من|فوق|فوق من|ابتداء من)\s*(\d+)\s*(?:متر|متر مربع|مربع)/)
+
+    if (lessAreaMatch) {
+      maxArea = Number(lessAreaMatch[1])
+      explanation.push(`المساحة القصوى: ${maxArea} متر`)
+    } else if (moreAreaMatch) {
+      minArea = Number(moreAreaMatch[1])
+      explanation.push(`المساحة الدنيا: ${minArea} متر`)
+    } else if (exactAreaMatch) {
       maxArea = Number(exactAreaMatch[1])
-      explanation.push(`المساحة المطلوبة تقريباً: ${maxArea} متر`)
+      minArea = Math.max(0, maxArea - 40)
+      explanation.push(`المساحة: بين ${minArea} و ${maxArea} متر`)
     }
   }
 
@@ -201,10 +394,43 @@ function parseSmartQuery(query: string): ParsedSearch {
     district,
     minPriceDh,
     maxPriceDh,
-    maxArea,
     minArea,
+    maxArea,
+    sortMode,
     explanation,
   }
+}
+
+function buildAssistantReply(parsed: ParsedSearch) {
+  const missing: string[] = []
+
+  if (!parsed.propertyType) missing.push("نوع العقار")
+  if (!parsed.city && !parsed.district) missing.push("المدينة أو الحي")
+  if (parsed.minPriceDh === null && parsed.maxPriceDh === null) missing.push("الثمن التقريبي")
+
+  if (parsed.explanation.length === 0) {
+    return "سمعتك، ولكن ما زلت ما فهمتش البحث بشكل كافي. قولي ليا شنو نوع العقار، المدينة أو الحي، والثمن التقريبي."
+  }
+
+  const understood = parsed.explanation.join("، ")
+
+  if (missing.length === 0) {
+    return `فهمت بلي كتقلب على ${understood}. إذا هذا هو المطلوب ضغط على زر البحث. وإذا لا، قول ليا شنو خاصني نصحح.`
+  }
+
+  return `فهمت مبدئياً: ${understood}. باش نعطيك نتائج أدق، زيد عطيني ${missing.join("، ")}.`
+}
+
+function speakArabic(text: string) {
+  if (!("speechSynthesis" in window)) return
+
+  window.speechSynthesis.cancel()
+
+  const utterance = new SpeechSynthesisUtterance(text)
+  utterance.lang = "ar-MA"
+  utterance.rate = 0.95
+  utterance.pitch = 1
+  window.speechSynthesis.speak(utterance)
 }
 
 function Header({
@@ -427,6 +653,9 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<SavedUser | null>(null)
   const [query, setQuery] = useState("")
   const [appliedQuery, setAppliedQuery] = useState("")
+  const [assistantMessage, setAssistantMessage] = useState(
+    "أنا المساعد العقاري ديالك. قول ليا شنو باغي: شقة، فيلا، المدينة، الحي، والثمن التقريبي."
+  )
 
   useEffect(() => {
     const raw = localStorage.getItem("immomarket_current_user")
@@ -450,25 +679,51 @@ export default function App() {
     setSelectedProperty(null)
   }
 
-  const parsedSearch = useMemo(() => {
-    return parseSmartQuery(appliedQuery)
-  }, [appliedQuery])
+  const handleVoiceResult = (text: string) => {
+    const parsed = parseSmartQuery(text)
+    const reply = buildAssistantReply(parsed)
+    setAssistantMessage(reply)
+    speakArabic(reply)
+
+    const unknownPhrases = JSON.parse(
+      localStorage.getItem("immomarket_unknown_phrases") || "[]"
+    )
+
+    if (parsed.explanation.length === 0) {
+      const next = [...unknownPhrases, text].slice(-50)
+      localStorage.setItem("immomarket_unknown_phrases", JSON.stringify(next))
+    }
+  }
+
+  const parsedSearch = useMemo(() => parseSmartQuery(appliedQuery), [appliedQuery])
 
   const filteredProperties = useMemo(() => {
     if (!appliedQuery.trim()) return properties
 
-    return properties.filter((property) => {
+    const filtered = properties.filter((property) => {
       const propertyPriceDh = priceStringToDh(property.price)
       const normalizedTitle = normalizeArabic(property.title)
       const normalizedCity = normalizeArabic(property.city)
       const normalizedDistrict = normalizeArabic(property.district)
       const normalizedDescription = normalizeArabic(property.description)
+      const searchableText = normalizeArabic(
+        [
+          property.title,
+          property.city,
+          property.district,
+          property.description,
+          property.area.toString(),
+          property.price,
+        ].join(" ")
+      )
 
       if (parsedSearch.propertyType) {
-        const wantedType = normalizeArabic(parsedSearch.propertyType)
-        if (!normalizedTitle.includes(wantedType) && !normalizedDescription.includes(wantedType)) {
-          return false
-        }
+        const aliases = propertyTypeAliases[parsedSearch.propertyType].map(normalizeArabic)
+        const matchType = aliases.some(
+          (alias) =>
+            normalizedTitle.includes(alias) || normalizedDescription.includes(alias)
+        )
+        if (!matchType) return false
       }
 
       if (parsedSearch.city) {
@@ -499,50 +754,10 @@ export default function App() {
         return false
       }
 
-      // fallback text search
-      const searchableText = normalizeArabic(
-        [
-          property.title,
-          property.city,
-          property.district,
-          property.description,
-          property.area.toString(),
-          property.price,
-        ].join(" ")
-      )
-
       const tokens = parsedSearch.normalized
         .split(" ")
         .filter(Boolean)
-        .filter(
-          (token) =>
-            ![
-              "شقه",
-              "فيلا",
-              "بين",
-              "ما",
-              "مابين",
-              "الى",
-              "الي",
-              "حتى",
-              "اقل",
-              "اكثر",
-              "من",
-              "تحت",
-              "دون",
-              "فوق",
-              "مليون",
-              "متر",
-              "اعطيني",
-              "بغيت",
-              "بغيتي",
-              "كنبغي",
-              "كنقلب",
-              "على",
-              "فال",
-              "في",
-            ].includes(token) && !/^\d+$/.test(token)
-        )
+        .filter((token) => !stopWords.includes(token) && !/^\d+$/.test(token))
 
       if (tokens.length > 0) {
         return tokens.every((token) => searchableText.includes(token))
@@ -550,6 +765,28 @@ export default function App() {
 
       return true
     })
+
+    if (parsedSearch.sortMode === "cheap") {
+      return [...filtered].sort((a, b) => priceStringToDh(a.price) - priceStringToDh(b.price))
+    }
+
+    if (parsedSearch.sortMode === "luxury") {
+      return [...filtered].sort((a, b) => {
+        const priceDiff = priceStringToDh(b.price) - priceStringToDh(a.price)
+        if (priceDiff !== 0) return priceDiff
+        return b.area - a.area
+      })
+    }
+
+    if (parsedSearch.sortMode === "best") {
+      return [...filtered].sort((a, b) => {
+        const scoreA = priceStringToDh(a.price) + a.area * 5000
+        const scoreB = priceStringToDh(b.price) + b.area * 5000
+        return scoreB - scoreA
+      })
+    }
+
+    return filtered
   }, [appliedQuery, parsedSearch])
 
   if (currentPage === "login") {
@@ -594,9 +831,21 @@ export default function App() {
             value={query}
             onChange={setQuery}
             onSearch={handleSearch}
+            onVoiceResult={handleVoiceResult}
           />
 
-          <main className="mx-auto mt-8 max-w-md px-4 pb-16">
+          <main className="mx-auto mt-5 max-w-md px-4 pb-16">
+            <div className="mb-5 rounded-[24px] bg-white p-4 text-right shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+              <div className="mb-2 flex items-center justify-end gap-2">
+                <Volume2 size={18} className="text-slate-500" />
+                <Bot size={18} className="text-[#06142f]" />
+              </div>
+
+              <p className="text-[15px] font-bold leading-8 text-[#06142f]">
+                {assistantMessage}
+              </p>
+            </div>
+
             <h2 className="mb-5 text-right text-[34px] font-black tracking-tight text-[#06142f]">
               العقارات المتوفرة
             </h2>
@@ -629,7 +878,7 @@ export default function App() {
                   لا توجد عقارات مطابقة
                 </p>
                 <p className="mt-2 text-[14px] font-bold text-slate-500">
-                  حاول مثلاً: شقة بين 50 و 60 مليون، أو فيلا في الرباط، أو شقة 80 متر
+                  حاول مثلاً: ارخص شقة، فيلا راقية فالرباط، شقة في حي الرياض، أو قول ليا المدينة والثمن.
                 </p>
               </div>
             ) : (

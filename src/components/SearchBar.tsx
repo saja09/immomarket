@@ -20,12 +20,14 @@ type SearchBarProps = {
   value: string
   onChange: (value: string) => void
   onSearch: () => void
+  onVoiceResult: (text: string) => void
 }
 
 export default function SearchBar({
   value,
   onChange,
   onSearch,
+  onVoiceResult,
 }: SearchBarProps) {
   const [open, setOpen] = useState(false)
   const [listening, setListening] = useState(false)
@@ -40,7 +42,6 @@ export default function SearchBar({
     }
 
     const recognition = new SpeechRecognition()
-
     recognition.lang = "ar-MA"
     recognition.continuous = false
     recognition.interimResults = false
@@ -52,6 +53,7 @@ export default function SearchBar({
     recognition.onresult = (event: any) => {
       const text = event.results?.[0]?.[0]?.transcript || ""
       onChange(text)
+      onVoiceResult(text)
       setListening(false)
     }
 
