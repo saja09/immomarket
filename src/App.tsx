@@ -29,6 +29,19 @@ type SavedUser = {
   password: string
 }
 
+type ParsedSearch = {
+  raw: string
+  normalized: string
+  propertyType: "شقة" | "فيلا" | null
+  city: string | null
+  district: string | null
+  minPriceDh: number | null
+  maxPriceDh: number | null
+  maxArea: number | null
+  minArea: number | null
+  explanation: string[]
+}
+
 const properties: Property[] = [
   {
     id: 1,
@@ -77,6 +90,121 @@ function normalizeArabic(text: string) {
     .replace(/ى/g, "ي")
     .replace(/ؤ/g, "و")
     .replace(/ئ/g, "ي")
+    .replace(/[^\u0600-\u06FF0-9a-zA-Z\s]/g, " ")
+    .replace(/\s+/g, " ")
+}
+
+function formatDh(value: number) {
+  return `${new Intl.NumberFormat("fr-FR").format(value)} DH`
+}
+
+function priceStringToDh(price: string) {
+  const digits = price.replace(/[^\d]/g, "")
+  return Number(digits || 0)
+}
+
+// 1 مليون بالسنتيم = 10,000 درهم
+function millionCentimesToDh(value: number) {
+  return value * 10000
+}
+
+function parseSmartQuery(query: string): ParsedSearch {
+  const normalized = normalizeArabic(query)
+  const explanation: string[] = []
+
+  let propertyType: "شقة" | "فيلا" | null = null
+  if (normalized.includes("شقه")) {
+    propertyType = "شقة"
+    explanation.push("نوع العقار: شقة")
+  } else if (normalized.includes("فيلا")) {
+    propertyType = "فيلا"
+    explanation.push("نوع العقار: فيلا")
+  }
+
+  let city: string | null = null
+  const knownCities = ["الرباط", "سلا", "الخميسات"]
+  for (const c of knownCities) {
+    if (normalized.includes(normalizeArabic(c))) {
+      city = c
+      explanation.push(`المدينة: ${c}`)
+      break
+    }
+  }
+
+  let district: string | null = null
+  const knownDistricts = ["حي الرياض", "بطانة", "وسط المدينة"]
+  for (const d of knownDistricts) {
+    if (normalized.includes(normalizeArabic(d))) {
+      district = d
+      explanation.push(`الحي: ${d}`)
+      break
+    }
+  }
+
+  let minPriceDh: number | null = null
+  let maxPriceDh: number | null = null
+
+  const betweenMillionMatch =
+    normalized.match(/(?:ما ?بين|بين)\s*(\d+)\s*(?:و|الى|الي|حتى|-)\s*(\d+)\s*مليون/) ||
+    normalized.match(/(\d+)\s*(?:و|الى|الي|حتى|-)\s*(\d+)\s*مليون/)
+
+  if (betweenMillionMatch) {
+    const first = Number(betweenMillionMatch[1])
+    const second = Number(betweenMillionMatch[2])
+    minPriceDh = millionCentimesToDh(Math.min(first, second))
+    maxPriceDh = millionCentimesToDh(Math.max(first, second))
+    explanation.push(`الثمن: بين ${formatDh(minPriceDh)} و ${formatDh(maxPriceDh)} (تم التحويل من السنتيم)`)
+  } else {
+    const lessThanMatch = normalized.match(/(?:اقل من|اقل|تحت|دون)\s*(\d+)\s*مليون/)
+    const moreThanMatch = normalized.match(/(?:اكثر من|فوق|فوق ?من|ابتداء من)\s*(\d+)\s*مليون/)
+    const exactMillionMatch = normalized.match(/(\d+)\s*مليون/)
+
+    if (lessThanMatch) {
+      maxPriceDh = millionCentimesToDh(Number(lessThanMatch[1]))
+      explanation.push(`الثمن الأقصى: ${formatDh(maxPriceDh)} (تم التحويل من السنتيم)`)
+    } else if (moreThanMatch) {
+      minPriceDh = millionCentimesToDh(Number(moreThanMatch[1]))
+      explanation.push(`الثمن الأدنى: ${formatDh(minPriceDh)} (تم التحويل من السنتيم)`)
+    } else if (exactMillionMatch) {
+      const exactDh = millionCentimesToDh(Number(exactMillionMatch[1]))
+      minPriceDh = exactDh
+      maxPriceDh = exactDh
+      explanation.push(`الثمن: ${formatDh(exactDh)} (تم التحويل من السنتيم)`)
+    }
+  }
+
+  let maxArea: number | null = null
+  let minArea: number | null = null
+
+  const betweenAreaMatch =
+    normalized.match(/(?:ما ?بين|بين)\s*(\d+)\s*(?:و|الى|الي|حتى|-)\s*(\d+)\s*(?:متر|متر مربع|متر مربعه)?/)
+
+  if (betweenAreaMatch) {
+    minArea = Math.min(Number(betweenAreaMatch[1]), Number(betweenAreaMatch[2]))
+    maxArea = Math.max(Number(betweenAreaMatch[1]), Number(betweenAreaMatch[2]))
+    if (minArea > 0 && maxArea > 0) {
+      explanation.push(`المساحة: بين ${minArea} و ${maxArea} متر`)
+    }
+  } else {
+    const exactAreaMatch = normalized.match(/(\d+)\s*(?:متر|متر مربع|متر مربعه)/)
+    if (exactAreaMatch) {
+      maxArea = Number(exactAreaMatch[1])
+      explanation.push(`المساحة المطلوبة تقريباً: ${maxArea} متر`)
+    }
+  }
+
+  return {
+    raw: query,
+    normalized,
+    propertyType,
+    city,
+    district,
+    minPriceDh,
+    maxPriceDh,
+    maxArea,
+    minArea,
+    explanation,
+  }
 }
 
 function Header({
@@ -322,12 +450,56 @@ export default function App() {
     setSelectedProperty(null)
   }
 
+  const parsedSearch = useMemo(() => {
+    return parseSmartQuery(appliedQuery)
+  }, [appliedQuery])
+
   const filteredProperties = useMemo(() => {
     if (!appliedQuery.trim()) return properties
 
-    const normalizedQuery = normalizeArabic(appliedQuery)
-
     return properties.filter((property) => {
+      const propertyPriceDh = priceStringToDh(property.price)
+      const normalizedTitle = normalizeArabic(property.title)
+      const normalizedCity = normalizeArabic(property.city)
+      const normalizedDistrict = normalizeArabic(property.district)
+      const normalizedDescription = normalizeArabic(property.description)
+
+      if (parsedSearch.propertyType) {
+        const wantedType = normalizeArabic(parsedSearch.propertyType)
+        if (!normalizedTitle.includes(wantedType) && !normalizedDescription.includes(wantedType)) {
+          return false
+        }
+      }
+
+      if (parsedSearch.city) {
+        if (!normalizedCity.includes(normalizeArabic(parsedSearch.city))) {
+          return false
+        }
+      }
+
+      if (parsedSearch.district) {
+        if (!normalizedDistrict.includes(normalizeArabic(parsedSearch.district))) {
+          return false
+        }
+      }
+
+      if (parsedSearch.minPriceDh !== null && propertyPriceDh < parsedSearch.minPriceDh) {
+        return false
+      }
+
+      if (parsedSearch.maxPriceDh !== null && propertyPriceDh > parsedSearch.maxPriceDh) {
+        return false
+      }
+
+      if (parsedSearch.minArea !== null && property.area < parsedSearch.minArea) {
+        return false
+      }
+
+      if (parsedSearch.maxArea !== null && property.area > parsedSearch.maxArea) {
+        return false
+      }
+
+      // fallback text search
       const searchableText = normalizeArabic(
         [
           property.title,
@@ -339,9 +511,46 @@ export default function App() {
         ].join(" ")
       )
 
-      return searchableText.includes(normalizedQuery)
+      const tokens = parsedSearch.normalized
+        .split(" ")
+        .filter(Boolean)
+        .filter(
+          (token) =>
+            ![
+              "شقه",
+              "فيلا",
+              "بين",
+              "ما",
+              "مابين",
+              "الى",
+              "الي",
+              "حتى",
+              "اقل",
+              "اكثر",
+              "من",
+              "تحت",
+              "دون",
+              "فوق",
+              "مليون",
+              "متر",
+              "اعطيني",
+              "بغيت",
+              "بغيتي",
+              "كنبغي",
+              "كنقلب",
+              "على",
+              "فال",
+              "في",
+            ].includes(token) && !/^\d+$/.test(token)
+        )
+
+      if (tokens.length > 0) {
+        return tokens.every((token) => searchableText.includes(token))
+      }
+
+      return true
     })
-  }, [appliedQuery])
+  }, [appliedQuery, parsedSearch])
 
   if (currentPage === "login") {
     return (
@@ -393,9 +602,25 @@ export default function App() {
             </h2>
 
             {appliedQuery && (
-              <p className="mb-4 text-right text-[14px] font-bold text-slate-500">
-                نتائج البحث عن: {appliedQuery}
-              </p>
+              <div className="mb-4 rounded-[20px] bg-white p-4 text-right shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+                <p className="text-[14px] font-black text-[#06142f]">
+                  فهمت البحث هكذا:
+                </p>
+
+                {parsedSearch.explanation.length > 0 ? (
+                  <div className="mt-2 space-y-1">
+                    {parsedSearch.explanation.map((item, index) => (
+                      <p key={index} className="text-[13px] font-bold text-slate-500">
+                        • {item}
+                      </p>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-2 text-[13px] font-bold text-slate-500">
+                    نتائج البحث عن: {appliedQuery}
+                  </p>
+                )}
+              </div>
             )}
 
             {filteredProperties.length === 0 ? (
@@ -404,7 +629,7 @@ export default function App() {
                   لا توجد عقارات مطابقة
                 </p>
                 <p className="mt-2 text-[14px] font-bold text-slate-500">
-                  حاول بكلمات أخرى مثل: الرباط، شقة، سلا، حي الرياض...
+                  حاول مثلاً: شقة بين 50 و 60 مليون، أو فيلا في الرباط، أو شقة 80 متر
                 </p>
               </div>
             ) : (
