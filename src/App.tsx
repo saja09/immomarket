@@ -9,6 +9,7 @@ import {
   User,
 } from "lucide-react"
 import SearchBar from "./components/SearchBar"
+import Login from "./pages/Login"
 
 type Property = {
   id: number
@@ -60,11 +61,15 @@ const properties: Property[] = [
   },
 ]
 
-function Header() {
+function Header({ onLogin }: { onLogin: () => void }) {
   return (
     <header className="mx-auto mt-4 max-w-md px-4">
       <div className="flex items-center justify-between rounded-[28px] bg-white px-5 py-4 shadow-[0_12px_30px_rgba(0,0,0,0.08)]">
-        <button className="flex items-center gap-2 rounded-full border border-slate-200 px-5 py-3 text-[15px] font-bold text-[#06142f]">
+        <button
+          type="button"
+          onClick={onLogin}
+          className="flex items-center gap-2 rounded-full border border-slate-200 px-5 py-3 text-[15px] font-bold text-[#06142f]"
+        >
           <User size={18} />
           الدخول
         </button>
@@ -248,10 +253,15 @@ function PropertyDetails({
 
 export default function App() {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null)
+  const [currentPage, setCurrentPage] = useState<"home" | "login">("home")
+
+  if (currentPage === "login") {
+    return <Login onBack={() => setCurrentPage("home")} />
+  }
 
   return (
     <div className="min-h-screen bg-[#f3f5fb] text-[#06142f]" dir="rtl">
-      <Header />
+      <Header onLogin={() => setCurrentPage("login")} />
 
       {selectedProperty ? (
         <PropertyDetails
