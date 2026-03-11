@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import {
   Building2,
   MapPin,
@@ -67,6 +67,17 @@ const properties: Property[] = [
       "شقة اقتصادية مناسبة للسكن أو الاستثمار، في حي هادئ وبقرب وسائل النقل والمحلات.",
   },
 ]
+
+function normalizeArabic(text: string) {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[أإآ]/g, "ا")
+    .replace(/ة/g, "ه")
+    .replace(/ى/g, "ي")
+    .replace(/ؤ/g, "و")
+    .replace(/ئ/g, "ي")
+}
 
 function Header({
   currentUser,
@@ -286,6 +297,8 @@ export default function App() {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null)
   const [currentPage, setCurrentPage] = useState<"home" | "login" | "profile">("home")
   const [currentUser, setCurrentUser] = useState<SavedUser | null>(null)
+  const [query, setQuery] = useState("")
+  const [appliedQuery, setAppliedQuery] = useState("")
 
   useEffect(() => {
     const raw = localStorage.getItem("immomarket_current_user")
@@ -304,11 +317,31 @@ export default function App() {
     setCurrentPage("home")
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem("immomarket_current_user")
-    setCurrentUser(null)
-    setCurrentPage("home")
+  const handleSearch = () => {
+    setAppliedQuery(query.trim())
+    setSelectedProperty(null)
   }
+
+  const filteredProperties = useMemo(() => {
+    if (!appliedQuery.trim()) return properties
+
+    const normalizedQuery = normalizeArabic(appliedQuery)
+
+    return properties.filter((property) => {
+      const searchableText = normalizeArabic(
+        [
+          property.title,
+          property.city,
+          property.district,
+          property.description,
+          property.area.toString(),
+          property.price,
+        ].join(" ")
+      )
+
+      return searchableText.includes(normalizedQuery)
+    })
+  }, [appliedQuery])
 
   if (currentPage === "login") {
     return (
@@ -324,7 +357,11 @@ export default function App() {
       <Profile
         user={currentUser}
         onBack={() => setCurrentPage("home")}
-        onLogout={handleLogout}
+        onLogout={() => {
+          localStorage.removeItem("immomarket_current_user")
+          setCurrentUser(null)
+          setCurrentPage("home")
+        }}
       />
     )
   }
@@ -344,22 +381,43 @@ export default function App() {
         />
       ) : (
         <>
-          <SearchBar />
+          <SearchBar
+            value={query}
+            onChange={setQuery}
+            onSearch={handleSearch}
+          />
 
           <main className="mx-auto mt-8 max-w-md px-4 pb-16">
             <h2 className="mb-5 text-right text-[34px] font-black tracking-tight text-[#06142f]">
               العقارات المتوفرة
             </h2>
 
-            <div className="grid gap-6">
-              {properties.map((property) => (
-                <PropertyCard
-                  key={property.id}
-                  property={property}
-                  onOpen={setSelectedProperty}
-                />
-              ))}
-            </div>
+            {appliedQuery && (
+              <p className="mb-4 text-right text-[14px] font-bold text-slate-500">
+                نتائج البحث عن: {appliedQuery}
+              </p>
+            )}
+
+            {filteredProperties.length === 0 ? (
+              <div className="rounded-[24px] bg-white p-6 text-right shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+                <p className="text-[18px] font-black text-[#06142f]">
+                  لا توجد عقارات مطابقة
+                </p>
+                <p className="mt-2 text-[14px] font-bold text-slate-500">
+                  حاول بكلمات أخرى مثل: الرباط، شقة، سلا، حي الرياض...
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-6">
+                {filteredProperties.map((property) => (
+                  <PropertyCard
+                    key={property.id}
+                    property={property}
+                    onOpen={setSelectedProperty}
+                  />
+                ))}
+              </div>
+            )}
           </main>
         </>
       )}
