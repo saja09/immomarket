@@ -7,10 +7,10 @@ import {
   ArrowRight,
   MessageCircle,
   User,
-  LogOut,
 } from "lucide-react"
 import SearchBar from "./components/SearchBar"
 import Login from "./pages/Login"
+import Profile from "./pages/Profile"
 
 type Property = {
   id: number
@@ -71,11 +71,11 @@ const properties: Property[] = [
 function Header({
   currentUser,
   onLogin,
-  onLogout,
+  onProfile,
 }: {
   currentUser: SavedUser | null
   onLogin: () => void
-  onLogout: () => void
+  onProfile: () => void
 }) {
   return (
     <header className="mx-auto mt-4 max-w-md px-4">
@@ -83,11 +83,11 @@ function Header({
         {currentUser ? (
           <button
             type="button"
-            onClick={onLogout}
+            onClick={onProfile}
             className="flex items-center gap-2 rounded-full border border-slate-200 px-5 py-3 text-[15px] font-bold text-[#06142f]"
           >
-            <LogOut size={18} />
-            خروج
+            <User size={18} />
+            {currentUser.fullName}
           </button>
         ) : (
           <button
@@ -101,16 +101,9 @@ function Header({
         )}
 
         <div className="flex items-center gap-3">
-          <div className="text-right">
-            <h1 className="text-[30px] font-black tracking-tight text-[#06142f]">
-              ImmoMarket
-            </h1>
-            {currentUser && (
-              <p className="text-[12px] font-bold text-slate-500">
-                {currentUser.fullName}
-              </p>
-            )}
-          </div>
+          <h1 className="text-[30px] font-black tracking-tight text-[#06142f]">
+            ImmoMarket
+          </h1>
 
           <div className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-gradient-to-br from-[#06142f] to-[#0a2b63] shadow">
             <span className="text-[18px] font-black text-white">IM</span>
@@ -286,7 +279,7 @@ function PropertyDetails({
 
 export default function App() {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null)
-  const [currentPage, setCurrentPage] = useState<"home" | "login">("home")
+  const [currentPage, setCurrentPage] = useState<"home" | "login" | "profile">("home")
   const [currentUser, setCurrentUser] = useState<SavedUser | null>(null)
 
   useEffect(() => {
@@ -309,6 +302,7 @@ export default function App() {
   const handleLogout = () => {
     localStorage.removeItem("immomarket_current_user")
     setCurrentUser(null)
+    setCurrentPage("home")
   }
 
   if (currentPage === "login") {
@@ -320,12 +314,22 @@ export default function App() {
     )
   }
 
+  if (currentPage === "profile" && currentUser) {
+    return (
+      <Profile
+        user={currentUser}
+        onBack={() => setCurrentPage("home")}
+        onLogout={handleLogout}
+      />
+    )
+  }
+
   return (
     <div className="min-h-screen bg-[#f3f5fb] text-[#06142f]" dir="rtl">
       <Header
         currentUser={currentUser}
         onLogin={() => setCurrentPage("login")}
-        onLogout={handleLogout}
+        onProfile={() => setCurrentPage("profile")}
       />
 
       {selectedProperty ? (
