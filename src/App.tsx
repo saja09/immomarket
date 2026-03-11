@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   Building2,
   MapPin,
@@ -7,6 +7,7 @@ import {
   ArrowRight,
   MessageCircle,
   User,
+  LogOut,
 } from "lucide-react"
 import SearchBar from "./components/SearchBar"
 import Login from "./pages/Login"
@@ -20,6 +21,12 @@ type Property = {
   price: string
   image: string
   description: string
+}
+
+type SavedUser = {
+  fullName: string
+  identifier: string
+  password: string
 }
 
 const properties: Property[] = [
@@ -61,23 +68,49 @@ const properties: Property[] = [
   },
 ]
 
-function Header({ onLogin }: { onLogin: () => void }) {
+function Header({
+  currentUser,
+  onLogin,
+  onLogout,
+}: {
+  currentUser: SavedUser | null
+  onLogin: () => void
+  onLogout: () => void
+}) {
   return (
     <header className="mx-auto mt-4 max-w-md px-4">
       <div className="flex items-center justify-between rounded-[28px] bg-white px-5 py-4 shadow-[0_12px_30px_rgba(0,0,0,0.08)]">
-        <button
-          type="button"
-          onClick={onLogin}
-          className="flex items-center gap-2 rounded-full border border-slate-200 px-5 py-3 text-[15px] font-bold text-[#06142f]"
-        >
-          <User size={18} />
-          الدخول
-        </button>
+        {currentUser ? (
+          <button
+            type="button"
+            onClick={onLogout}
+            className="flex items-center gap-2 rounded-full border border-slate-200 px-5 py-3 text-[15px] font-bold text-[#06142f]"
+          >
+            <LogOut size={18} />
+            خروج
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onLogin}
+            className="flex items-center gap-2 rounded-full border border-slate-200 px-5 py-3 text-[15px] font-bold text-[#06142f]"
+          >
+            <User size={18} />
+            الدخول
+          </button>
+        )}
 
         <div className="flex items-center gap-3">
-          <h1 className="text-[30px] font-black tracking-tight text-[#06142f]">
-            ImmoMarket
-          </h1>
+          <div className="text-right">
+            <h1 className="text-[30px] font-black tracking-tight text-[#06142f]">
+              ImmoMarket
+            </h1>
+            {currentUser && (
+              <p className="text-[12px] font-bold text-slate-500">
+                {currentUser.fullName}
+              </p>
+            )}
+          </div>
 
           <div className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-gradient-to-br from-[#06142f] to-[#0a2b63] shadow">
             <span className="text-[18px] font-black text-white">IM</span>
@@ -254,14 +287,46 @@ function PropertyDetails({
 export default function App() {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null)
   const [currentPage, setCurrentPage] = useState<"home" | "login">("home")
+  const [currentUser, setCurrentUser] = useState<SavedUser | null>(null)
+
+  useEffect(() => {
+    const raw = localStorage.getItem("immomarket_current_user")
+    if (raw) {
+      try {
+        setCurrentUser(JSON.parse(raw))
+      } catch {
+        localStorage.removeItem("immomarket_current_user")
+      }
+    }
+  }, [])
+
+  const handleAuthSuccess = (user: SavedUser) => {
+    setCurrentUser(user)
+    localStorage.setItem("immomarket_current_user", JSON.stringify(user))
+    setCurrentPage("home")
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem("immomarket_current_user")
+    setCurrentUser(null)
+  }
 
   if (currentPage === "login") {
-    return <Login onBack={() => setCurrentPage("home")} />
+    return (
+      <Login
+        onBack={() => setCurrentPage("home")}
+        onAuthSuccess={handleAuthSuccess}
+      />
+    )
   }
 
   return (
     <div className="min-h-screen bg-[#f3f5fb] text-[#06142f]" dir="rtl">
-      <Header onLogin={() => setCurrentPage("login")} />
+      <Header
+        currentUser={currentUser}
+        onLogin={() => setCurrentPage("login")}
+        onLogout={handleLogout}
+      />
 
       {selectedProperty ? (
         <PropertyDetails
