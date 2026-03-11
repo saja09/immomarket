@@ -77,6 +77,9 @@ function Header({
   onLogin: () => void
   onProfile: () => void
 }) {
+  const userInitial =
+    currentUser?.fullName?.trim()?.charAt(0)?.toUpperCase() || "U"
+
   return (
     <header className="mx-auto mt-4 max-w-md px-4">
       <div className="flex items-center justify-between rounded-[28px] bg-white px-5 py-4 shadow-[0_12px_30px_rgba(0,0,0,0.08)]">
@@ -84,10 +87,12 @@ function Header({
           <button
             type="button"
             onClick={onProfile}
-            className="flex items-center gap-2 rounded-full border border-slate-200 px-5 py-3 text-[15px] font-bold text-[#06142f]"
+            className="flex items-center gap-3 rounded-full border border-slate-200 bg-[#f8fafc] px-3 py-2.5 text-[15px] font-bold text-[#06142f]"
           >
-            <User size={18} />
-            {currentUser.fullName}
+            <User size={16} />
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#06142f] text-[14px] font-black text-white">
+              {userInitial}
+            </span>
           </button>
         ) : (
           <button
