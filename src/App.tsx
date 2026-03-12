@@ -7,8 +7,6 @@ import {
   ArrowRight,
   MessageCircle,
   User,
-  Bot,
-  Volume2,
 } from "lucide-react"
 import SearchBar from "./components/SearchBar"
 import Login from "./pages/Login"
@@ -50,39 +48,69 @@ type ParsedSearch = {
 const properties: Property[] = [
   {
     id: 1,
-    title: "فيلا فاخرة بإطلالة مفتوحة",
-    city: "الرباط",
-    district: "حي الرياض",
-    area: 320,
-    price: "2,500,000 DH",
+    title: "شقة اقتصادية مناسبة",
+    city: "سيدي علال البحراوي",
+    district: "حي الأمل",
+    area: 62,
+    price: "430,000 DH",
     image:
-      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=80",
-    description:
-      "فيلا راقية بتصميم عصري، تشطيبات ممتازة، وإضاءة طبيعية قوية، وقريبة من مختلف الخدمات الأساسية.",
+      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
+    description: "شقة مناسبة للسكن الأول، قريبة من الخدمات اليومية وفي موقع هادئ.",
   },
   {
     id: 2,
-    title: "شقة للبيع بتصميم عصري",
-    city: "سلا",
-    district: "بطانة",
-    area: 96,
-    price: "850,000 DH",
+    title: "شقة عائلية بتشطيب جيد",
+    city: "سيدي علال البحراوي",
+    district: "حي النهضة",
+    area: 78,
+    price: "520,000 DH",
     image:
-      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
-    description:
-      "شقة حديثة ومريحة، مناسبة للسكن العائلي، بتوزيع داخلي ممتاز وموقع قريب من المرافق الضرورية.",
+      "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1200&q=80",
+    description: "شقة مريحة للعائلة، بتوزيع زوين وقريبة للطريق الوطنية.",
   },
   {
     id: 3,
-    title: "شقة اقتصادية ومناسبة",
-    city: "الخميسات",
-    district: "وسط المدينة",
-    area: 74,
-    price: "540,000 DH",
+    title: "شقة حديثة للبيع",
+    city: "سيدي علال البحراوي",
+    district: "حي الفتح",
+    area: 84,
+    price: "610,000 DH",
     image:
-      "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1200&q=80",
-    description:
-      "شقة اقتصادية مناسبة للسكن أو الاستثمار، في حي هادئ وبقرب وسائل النقل والمحلات.",
+      "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80",
+    description: "شقة حديثة بتصميم عملي وموقع مناسب للتنقل نحو الرباط والخميسات.",
+  },
+  {
+    id: 4,
+    title: "استوديو صغير للاستثمار",
+    city: "سيدي علال البحراوي",
+    district: "وسط المدينة",
+    area: 46,
+    price: "320,000 DH",
+    image:
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
+    description: "استوديو مناسب للاستثمار أو السكن الفردي، قريب من الحركة التجارية.",
+  },
+  {
+    id: 5,
+    title: "فيلا واسعة بواجهة مفتوحة",
+    city: "سيدي علال البحراوي",
+    district: "حي السعادة",
+    area: 240,
+    price: "1,450,000 DH",
+    image:
+      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=80",
+    description: "فيلا مناسبة لعائلة كبيرة، جو هادئ وقرب من الطريق السيار.",
+  },
+  {
+    id: 6,
+    title: "منزل مستقل قرب السوق الأسبوعي",
+    city: "سيدي علال البحراوي",
+    district: "قرب السوق الأسبوعي",
+    area: 132,
+    price: "890,000 DH",
+    image:
+      "https://images.unsplash.com/photo-1572120360610-d971b9d7767c?auto=format&fit=crop&w=1200&q=80",
+    description: "منزل مستقل في موقع مطلوب، قريب للسوق الأسبوعي والخدمات.",
   },
 ]
 
@@ -116,153 +144,60 @@ function millionCentimesToDh(value: number) {
 }
 
 const cityAliases: Record<string, string[]> = {
-  الرباط: ["الرباط", "رباط", "rabat"],
-  سلا: ["سلا", "sale", "salé"],
-  الخميسات: ["الخميسات", "خميسات", "khemisset", "khemissat"],
+  "سيدي علال البحراوي": [
+    "سيدي علال البحراوي",
+    "سيدي علال",
+    "البحراوي",
+    "sidi allal bahraoui",
+    "sidi allal el bahraoui",
+  ],
 }
 
 const districtAliases: Record<string, string[]> = {
-  "حي الرياض": ["حي الرياض", "الرياض", "hay riad", "riad"],
-  بطانة: ["بطانة", "بطانه", "bettana"],
-  "وسط المدينة": ["وسط المدينة", "وسط المدينه", "centre ville", "center"],
+  "حي الأمل": ["حي الأمل", "الامل", "حي الامل"],
+  "حي النهضة": ["حي النهضة", "النهضة"],
+  "حي الفتح": ["حي الفتح", "الفتح"],
+  "حي السعادة": ["حي السعادة", "السعادة"],
+  "حي المسيرة": ["حي المسيرة", "المسيرة"],
+  "وسط المدينة": ["وسط المدينة", "المدينة", "الوسط"],
+  "قرب السوق الأسبوعي": ["قرب السوق الأسبوعي", "السوق الأسبوعي", "قرب السوق"],
+  "قرب الطريق الوطنية": ["قرب الطريق الوطنية", "الطريق الوطنية"],
+  "قرب الطريق السيار": ["قرب الطريق السيار", "الطريق السيار"],
 }
 
 const propertyTypeAliases: Record<"شقة" | "فيلا" | "منزل" | "استوديو", string[]> = {
-  شقة: ["شقة", "شقه", "شقق", "appartement", "apartment", "apt"],
-  فيلا: ["فيلا", "villa", "villas"],
-  منزل: ["دار", "منزل", "بيت", "maison", "house", "home"],
-  استوديو: ["ستوديو", "استوديو", "studio"],
+  شقة: ["شقة", "شقه", "شقق", "appartement", "apartment"],
+  فيلا: ["فيلا", "villa"],
+  منزل: ["منزل", "دار", "بيت", "house", "maison"],
+  استوديو: ["استوديو", "ستوديو", "studio"],
 }
 
-const cheapWords = [
-  "ارخص",
-  "رخيص",
-  "رخيصة",
-  "رخاص",
-  "الهوتة",
-  "هوتة",
-  "الهوتات",
-  "هوتات",
-  "ثمن مناسب",
-  "اقتصادي",
-  "اقتصادية",
-  "جيبلي الهوتات",
-  "جيبلي الهوتات لعندك",
-]
-
-const luxuryWords = [
-  "افخم",
-  "فخم",
-  "فاخر",
-  "فاخرة",
-  "ارقى",
-  "راقي",
-  "راقية",
-  "طوب",
-  "luxury",
-  "premium",
-]
-
-const bestWords = [
-  "احسن",
-  "أفضل",
-  "افضل",
-  "مزيان",
-  "زوين",
-  "top",
-  "ممتاز",
-  "ممتازه",
-]
+const cheapWords = ["ارخص", "رخيص", "الهوتة", "اقتصادي", "ثمن مناسب"]
+const luxuryWords = ["افخم", "فاخر", "ارقى", "راقي", "فخم"]
+const bestWords = ["احسن", "افضل", "مزيان", "زوين"]
 
 const stopWords = [
-  "اريد",
-  "أريد",
-  "ابحت",
-  "أبحث",
-  "ابحث",
-  "بغيت",
-  "بغينا",
-  "عطيني",
-  "عطي",
-  "عرض",
-  "عرضلي",
-  "عرضليا",
-  "اعرض",
-  "اعرضلي",
-  "اعرضليا",
-  "وريني",
-  "وري",
-  "جيب",
-  "جيبلي",
-  "جيبليا",
-  "دبر",
-  "دبرلي",
-  "دبرليا",
-  "قلب",
-  "قلبلي",
-  "قلبليا",
-  "كنقلب",
-  "كنقلبو",
-  "على",
   "في",
-  "فال",
   "ف",
-  "ديال",
-  "ل",
-  "لي",
-  "ليا",
-  "عندي",
-  "شنو",
-  "واش",
-  "ما",
-  "بين",
-  "مابين",
-  "الى",
-  "الي",
-  "حتى",
-  "اقل",
-  "اكثر",
+  "فال",
   "من",
-  "فوق",
-  "تحت",
-  "دون",
-  "بحدود",
-  "حدود",
-  "تقريبا",
-  "حوالي",
-  "في حي",
-  "حي",
+  "الى",
+  "بين",
+  "ما",
+  "مابين",
+  "المدينة",
+  "الحي",
+  "الثمن",
+  "السعر",
   "مليون",
   "ملايين",
   "درهم",
   "dh",
   "متر",
-  "مترمربع",
   "مربع",
-  "سنتيم",
-  "سنتيمات",
-  "ميزانيتي",
-  "الثمن",
-  "السعر",
-  "بثمن",
-  "ارخص",
-  "رخيص",
-  "رخيصة",
-  "الهوتة",
-  "هوتة",
-  "الهوتات",
-  "هوتات",
-  "افخم",
-  "فخم",
-  "فاخر",
-  "فاخرة",
-  "ارقى",
-  "راقي",
-  "راقية",
-  "طوب",
-  "احسن",
-  "افضل",
-  "أفضل",
+  "حتى",
+  "فوق",
+  "تحت",
 ]
 
 function includesAny(normalizedQuery: string, words: string[]) {
@@ -289,6 +224,7 @@ function parseSmartQuery(query: string): ParsedSearch {
 
   let propertyType: "شقة" | "فيلا" | "منزل" | "استوديو" | null = null
   const detectedPropertyType = extractCanonicalValue(normalized, propertyTypeAliases)
+
   if (
     detectedPropertyType === "شقة" ||
     detectedPropertyType === "فيلا" ||
@@ -330,59 +266,20 @@ function parseSmartQuery(query: string): ParsedSearch {
     minPriceDh = millionCentimesToDh(Math.min(first, second))
     maxPriceDh = millionCentimesToDh(Math.max(first, second))
     explanation.push(
-      `الثمن: بين ${formatDh(minPriceDh)} و ${formatDh(maxPriceDh)} (تم التحويل من السنتيم)`
+      `الثمن: بين ${formatDh(minPriceDh)} و ${formatDh(maxPriceDh)}`
     )
   } else {
     const lessThanMillionMatch =
-      normalized.match(/(?:اقل من|ما يفوتش|ما تفوتش|تحت|دون|بحدود|في حدود|حدود|تقريبا|حوالي)\s*(\d+)\s*(?:مليون|ملايين)?/)
-
+      normalized.match(/(?:اقل من|تحت|دون|حتى)\s*(\d+)\s*(?:مليون|ملايين)?/)
     const moreThanMillionMatch =
-      normalized.match(/(?:اكثر من|فوق|فوق من|ابتداء من|بدايه من)\s*(\d+)\s*(?:مليون|ملايين)?/)
-
-    const exactMillionMatch =
-      normalized.match(/(?:بثمن|الثمن|السعر)?\s*(\d+)\s*(?:مليون|ملايين)/)
+      normalized.match(/(?:اكثر من|فوق)\s*(\d+)\s*(?:مليون|ملايين)?/)
 
     if (lessThanMillionMatch) {
       maxPriceDh = millionCentimesToDh(Number(lessThanMillionMatch[1]))
-      explanation.push(`الثمن الأقصى: ${formatDh(maxPriceDh)} (تم التحويل من السنتيم)`)
+      explanation.push(`الثمن الأقصى: ${formatDh(maxPriceDh)}`)
     } else if (moreThanMillionMatch) {
       minPriceDh = millionCentimesToDh(Number(moreThanMillionMatch[1]))
-      explanation.push(`الثمن الأدنى: ${formatDh(minPriceDh)} (تم التحويل من السنتيم)`)
-    } else if (exactMillionMatch) {
-      const exactDh = millionCentimesToDh(Number(exactMillionMatch[1]))
-      minPriceDh = exactDh
-      maxPriceDh = exactDh
-      explanation.push(`الثمن: ${formatDh(exactDh)} (تم التحويل من السنتيم)`)
-    }
-  }
-
-  let minArea: number | null = null
-  let maxArea: number | null = null
-
-  const betweenAreaMatch =
-    normalized.match(/(?:ما ?بين|بين)\s*(\d+)\s*(?:و|الى|الي|حتى|-)\s*(\d+)\s*(?:متر|متر مربع|مربع)?/)
-
-  if (betweenAreaMatch) {
-    minArea = Math.min(Number(betweenAreaMatch[1]), Number(betweenAreaMatch[2]))
-    maxArea = Math.max(Number(betweenAreaMatch[1]), Number(betweenAreaMatch[2]))
-    explanation.push(`المساحة: بين ${minArea} و ${maxArea} متر`)
-  } else {
-    const exactAreaMatch = normalized.match(/(\d+)\s*(?:متر|متر مربع|مربع)/)
-    const lessAreaMatch =
-      normalized.match(/(?:اقل من|ما يفوتش|ما تفوتش|تحت|دون|بحدود|في حدود|حدود|تقريبا|حوالي)\s*(\d+)\s*(?:متر|متر مربع|مربع)/)
-    const moreAreaMatch =
-      normalized.match(/(?:اكثر من|فوق|فوق من|ابتداء من)\s*(\d+)\s*(?:متر|متر مربع|مربع)/)
-
-    if (lessAreaMatch) {
-      maxArea = Number(lessAreaMatch[1])
-      explanation.push(`المساحة القصوى: ${maxArea} متر`)
-    } else if (moreAreaMatch) {
-      minArea = Number(moreAreaMatch[1])
-      explanation.push(`المساحة الدنيا: ${minArea} متر`)
-    } else if (exactAreaMatch) {
-      maxArea = Number(exactAreaMatch[1])
-      minArea = Math.max(0, maxArea - 40)
-      explanation.push(`المساحة: بين ${minArea} و ${maxArea} متر`)
+      explanation.push(`الثمن الأدنى: ${formatDh(minPriceDh)}`)
     }
   }
 
@@ -394,43 +291,84 @@ function parseSmartQuery(query: string): ParsedSearch {
     district,
     minPriceDh,
     maxPriceDh,
-    minArea,
-    maxArea,
+    minArea: null,
+    maxArea: null,
     sortMode,
     explanation,
   }
 }
 
-function buildAssistantReply(parsed: ParsedSearch) {
-  const missing: string[] = []
+function filterPropertiesList(list: Property[], parsedSearch: ParsedSearch, rawQuery: string) {
+  if (!rawQuery.trim()) return list
 
-  if (!parsed.propertyType) missing.push("نوع العقار")
-  if (!parsed.city && !parsed.district) missing.push("المدينة أو الحي")
-  if (parsed.minPriceDh === null && parsed.maxPriceDh === null) missing.push("الثمن التقريبي")
+  const filtered = list.filter((property) => {
+    const propertyPriceDh = priceStringToDh(property.price)
+    const normalizedTitle = normalizeArabic(property.title)
+    const normalizedCity = normalizeArabic(property.city)
+    const normalizedDistrict = normalizeArabic(property.district)
+    const normalizedDescription = normalizeArabic(property.description)
 
-  if (parsed.explanation.length === 0) {
-    return "سمعتك، ولكن ما زلت ما فهمتش البحث بشكل كافي. قولي ليا شنو نوع العقار، المدينة أو الحي، والثمن التقريبي."
+    const searchableText = normalizeArabic(
+      [
+        property.title,
+        property.city,
+        property.district,
+        property.description,
+        property.area.toString(),
+        property.price,
+      ].join(" ")
+    )
+
+    if (parsedSearch.propertyType) {
+      const aliases = propertyTypeAliases[parsedSearch.propertyType].map(normalizeArabic)
+      const matchType = aliases.some(
+        (alias) =>
+          normalizedTitle.includes(alias) || normalizedDescription.includes(alias)
+      )
+      if (!matchType) return false
+    }
+
+    if (parsedSearch.city) {
+      if (!normalizedCity.includes(normalizeArabic(parsedSearch.city))) return false
+    }
+
+    if (parsedSearch.district) {
+      if (!normalizedDistrict.includes(normalizeArabic(parsedSearch.district))) return false
+    }
+
+    if (parsedSearch.minPriceDh !== null && propertyPriceDh < parsedSearch.minPriceDh) {
+      return false
+    }
+
+    if (parsedSearch.maxPriceDh !== null && propertyPriceDh > parsedSearch.maxPriceDh) {
+      return false
+    }
+
+    const tokens = parsedSearch.normalized
+      .split(" ")
+      .filter(Boolean)
+      .filter((token) => !stopWords.includes(token) && !/^\d+$/.test(token))
+
+    if (tokens.length > 0) {
+      return tokens.every((token) => searchableText.includes(token))
+    }
+
+    return true
+  })
+
+  if (parsedSearch.sortMode === "cheap") {
+    return [...filtered].sort((a, b) => priceStringToDh(a.price) - priceStringToDh(b.price))
   }
 
-  const understood = parsed.explanation.join("، ")
-
-  if (missing.length === 0) {
-    return `فهمت بلي كتقلب على ${understood}. إذا هذا هو المطلوب ضغط على زر البحث. وإذا لا، قول ليا شنو خاصني نصحح.`
+  if (parsedSearch.sortMode === "luxury") {
+    return [...filtered].sort((a, b) => priceStringToDh(b.price) - priceStringToDh(a.price))
   }
 
-  return `فهمت مبدئياً: ${understood}. باش نعطيك نتائج أدق، زيد عطيني ${missing.join("، ")}.`
-}
+  if (parsedSearch.sortMode === "best") {
+    return [...filtered].sort((a, b) => b.area - a.area)
+  }
 
-function speakArabic(text: string) {
-  if (!("speechSynthesis" in window)) return
-
-  window.speechSynthesis.cancel()
-
-  const utterance = new SpeechSynthesisUtterance(text)
-  utterance.lang = "ar-MA"
-  utterance.rate = 0.95
-  utterance.pitch = 1
-  window.speechSynthesis.speak(utterance)
+  return filtered
 }
 
 function Header({
@@ -442,8 +380,7 @@ function Header({
   onLogin: () => void
   onProfile: () => void
 }) {
-  const userInitial =
-    currentUser?.fullName?.trim()?.charAt(0)?.toUpperCase() || "U"
+  const userInitial = currentUser?.fullName?.trim()?.charAt(0)?.toUpperCase() || "U"
 
   return (
     <header className="mx-auto mt-4 max-w-md px-4">
@@ -474,7 +411,6 @@ function Header({
           <h1 className="text-[30px] font-black tracking-tight text-[#06142f]">
             ImmoMarket
           </h1>
-
           <div className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-gradient-to-br from-[#06142f] to-[#0a2b63] shadow">
             <span className="text-[18px] font-black text-white">IM</span>
           </div>
@@ -653,9 +589,6 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<SavedUser | null>(null)
   const [query, setQuery] = useState("")
   const [appliedQuery, setAppliedQuery] = useState("")
-  const [assistantMessage, setAssistantMessage] = useState(
-    "أنا المساعد العقاري ديالك. قول ليا شنو باغي: شقة، فيلا، المدينة، الحي، والثمن التقريبي."
-  )
 
   useEffect(() => {
     const raw = localStorage.getItem("immomarket_current_user")
@@ -674,120 +607,16 @@ export default function App() {
     setCurrentPage("home")
   }
 
+  const parsedSearch = useMemo(() => parseSmartQuery(appliedQuery), [appliedQuery])
+
+  const filteredProperties = useMemo(() => {
+    return filterPropertiesList(properties, parsedSearch, appliedQuery)
+  }, [parsedSearch, appliedQuery])
+
   const handleSearch = () => {
     setAppliedQuery(query.trim())
     setSelectedProperty(null)
   }
-
-  const handleVoiceResult = (text: string) => {
-    const parsed = parseSmartQuery(text)
-    const reply = buildAssistantReply(parsed)
-    setAssistantMessage(reply)
-    speakArabic(reply)
-
-    const unknownPhrases = JSON.parse(
-      localStorage.getItem("immomarket_unknown_phrases") || "[]"
-    )
-
-    if (parsed.explanation.length === 0) {
-      const next = [...unknownPhrases, text].slice(-50)
-      localStorage.setItem("immomarket_unknown_phrases", JSON.stringify(next))
-    }
-  }
-
-  const parsedSearch = useMemo(() => parseSmartQuery(appliedQuery), [appliedQuery])
-
-  const filteredProperties = useMemo(() => {
-    if (!appliedQuery.trim()) return properties
-
-    const filtered = properties.filter((property) => {
-      const propertyPriceDh = priceStringToDh(property.price)
-      const normalizedTitle = normalizeArabic(property.title)
-      const normalizedCity = normalizeArabic(property.city)
-      const normalizedDistrict = normalizeArabic(property.district)
-      const normalizedDescription = normalizeArabic(property.description)
-      const searchableText = normalizeArabic(
-        [
-          property.title,
-          property.city,
-          property.district,
-          property.description,
-          property.area.toString(),
-          property.price,
-        ].join(" ")
-      )
-
-      if (parsedSearch.propertyType) {
-        const aliases = propertyTypeAliases[parsedSearch.propertyType].map(normalizeArabic)
-        const matchType = aliases.some(
-          (alias) =>
-            normalizedTitle.includes(alias) || normalizedDescription.includes(alias)
-        )
-        if (!matchType) return false
-      }
-
-      if (parsedSearch.city) {
-        if (!normalizedCity.includes(normalizeArabic(parsedSearch.city))) {
-          return false
-        }
-      }
-
-      if (parsedSearch.district) {
-        if (!normalizedDistrict.includes(normalizeArabic(parsedSearch.district))) {
-          return false
-        }
-      }
-
-      if (parsedSearch.minPriceDh !== null && propertyPriceDh < parsedSearch.minPriceDh) {
-        return false
-      }
-
-      if (parsedSearch.maxPriceDh !== null && propertyPriceDh > parsedSearch.maxPriceDh) {
-        return false
-      }
-
-      if (parsedSearch.minArea !== null && property.area < parsedSearch.minArea) {
-        return false
-      }
-
-      if (parsedSearch.maxArea !== null && property.area > parsedSearch.maxArea) {
-        return false
-      }
-
-      const tokens = parsedSearch.normalized
-        .split(" ")
-        .filter(Boolean)
-        .filter((token) => !stopWords.includes(token) && !/^\d+$/.test(token))
-
-      if (tokens.length > 0) {
-        return tokens.every((token) => searchableText.includes(token))
-      }
-
-      return true
-    })
-
-    if (parsedSearch.sortMode === "cheap") {
-      return [...filtered].sort((a, b) => priceStringToDh(a.price) - priceStringToDh(b.price))
-    }
-
-    if (parsedSearch.sortMode === "luxury") {
-      return [...filtered].sort((a, b) => {
-        const priceDiff = priceStringToDh(b.price) - priceStringToDh(a.price)
-        if (priceDiff !== 0) return priceDiff
-        return b.area - a.area
-      })
-    }
-
-    if (parsedSearch.sortMode === "best") {
-      return [...filtered].sort((a, b) => {
-        const scoreA = priceStringToDh(a.price) + a.area * 5000
-        const scoreB = priceStringToDh(b.price) + b.area * 5000
-        return scoreB - scoreA
-      })
-    }
-
-    return filtered
-  }, [appliedQuery, parsedSearch])
 
   if (currentPage === "login") {
     return (
@@ -831,21 +660,9 @@ export default function App() {
             value={query}
             onChange={setQuery}
             onSearch={handleSearch}
-            onVoiceResult={handleVoiceResult}
           />
 
           <main className="mx-auto mt-5 max-w-md px-4 pb-16">
-            <div className="mb-5 rounded-[24px] bg-white p-4 text-right shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
-              <div className="mb-2 flex items-center justify-end gap-2">
-                <Volume2 size={18} className="text-slate-500" />
-                <Bot size={18} className="text-[#06142f]" />
-              </div>
-
-              <p className="text-[15px] font-bold leading-8 text-[#06142f]">
-                {assistantMessage}
-              </p>
-            </div>
-
             <h2 className="mb-5 text-right text-[34px] font-black tracking-tight text-[#06142f]">
               العقارات المتوفرة
             </h2>
@@ -878,7 +695,7 @@ export default function App() {
                   لا توجد عقارات مطابقة
                 </p>
                 <p className="mt-2 text-[14px] font-bold text-slate-500">
-                  حاول مثلاً: ارخص شقة، فيلا راقية فالرباط، شقة في حي الرياض، أو قول ليا المدينة والثمن.
+                  بدل الحي أو وسع شوية الثمن، وغادي تبان ليك النتائج.
                 </p>
               </div>
             ) : (
