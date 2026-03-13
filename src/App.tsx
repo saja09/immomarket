@@ -716,7 +716,7 @@ function PropertyDetails({
               key={activeImage}
               src={activeImage}
               alt={property.title}
-              className="h-full w-full object-cover transition-all duration-500 ease-out"
+              className="h-full w-full object-cover transition-transform duration-500 ease-out"
               draggable={false}
             />
 
@@ -751,7 +751,6 @@ function PropertyDetails({
             </div>
 
             <div className="absolute bottom-3 right-3 rounded-full bg-black/45 px-3 py-1 text-[11px] font-bold text-white backdrop-blur">
-              سحب للتنقل • ضغطتين لفول سكرين
             </div>
           </div>
 
@@ -951,7 +950,6 @@ function PropertyDetails({
           />
 
           <div className="absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-white/15 px-4 py-2 text-[13px] font-bold text-white backdrop-blur">
-            {activeIndex + 1} / {gallery.length} • ضغطتين للخروج
           </div>
         </div>
       )}
