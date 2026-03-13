@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import {
   Building2,
   MapPin,
@@ -621,343 +621,145 @@ function PropertyDetails({
   const priceDh = priceStringToDh(property.price)
   const supportDh = getHousingSupportDh(priceDh)
   const netPriceDh = getNetPriceAfterSupportDh(priceDh)
-
-  const gallery =
-    property.gallery && property.gallery.length > 0
-      ? property.gallery
-      : [property.image]
-
-  const [activeIndex, setActiveIndex] = useState(0)
-  const [isFullscreen, setIsFullscreen] = useState(false)
-
-  const touchStartX = useRef<number | null>(null)
-  const touchEndX = useRef<number | null>(null)
-  const lastTapRef = useRef(0)
+  const [activeImage, setActiveImage] = useState(property.gallery[0] || property.image)
 
   useEffect(() => {
-    setActiveIndex(0)
-    setIsFullscreen(false)
+    setActiveImage(property.gallery[0] || property.image)
   }, [property])
 
-  const activeImage = gallery[activeIndex] || property.image
-
-  const goToIndex = (index: number) => {
-    if (index < 0) {
-      setActiveIndex(gallery.length - 1)
-      return
-    }
-
-    if (index >= gallery.length) {
-      setActiveIndex(0)
-      return
-    }
-
-    setActiveIndex(index)
-  }
-
-  const goNext = () => goToIndex(activeIndex + 1)
-  const goPrev = () => goToIndex(activeIndex - 1)
-
-  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    touchStartX.current = e.changedTouches[0].clientX
-    touchEndX.current = e.changedTouches[0].clientX
-  }
-
-  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    touchEndX.current = e.changedTouches[0].clientX
-  }
-
-  const handleTouchEnd = () => {
-    if (touchStartX.current === null || touchEndX.current === null) return
-
-    const distance = touchStartX.current - touchEndX.current
-    const minSwipe = 45
-
-    if (Math.abs(distance) > minSwipe) {
-      if (distance > 0) goNext()
-      else goPrev()
-    }
-
-    touchStartX.current = null
-    touchEndX.current = null
-  }
-
-  const handleImageTap = () => {
-    const now = Date.now()
-
-    if (now - lastTapRef.current < 280) {
-      setIsFullscreen((prev) => !prev)
-    }
-
-    lastTapRef.current = now
-  }
-
   return (
-    <>
-      <main className="mx-auto max-w-md px-4 pb-16 pt-4">
-        <button
-          type="button"
-          onClick={onBack}
-          className="mb-4 flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[14px] font-bold text-[#06142f] shadow"
-        >
-          <ArrowRight size={16} />
-          رجوع
-        </button>
+    <main className="mx-auto max-w-md px-4 pb-16 pt-4">
+      <button
+        type="button"
+        onClick={onBack}
+        className="mb-4 flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[14px] font-bold text-[#06142f] shadow"
+      >
+        <ArrowRight size={16} />
+        رجوع
+      </button>
 
-        <article className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
-          <div
-            className="relative h-[280px] w-full overflow-hidden bg-slate-100 select-none"
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onClick={handleImageTap}
-          >
-            <img
-              key={activeImage}
-              src={activeImage}
-              alt={property.title}
-              className="h-full w-full object-cover transition-all duration-500 ease-out"
-              draggable={false}
-            />
+      <article className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+        <img src={activeImage} alt={property.title} className="h-[280px] w-full object-cover" />
 
-            {gallery.length > 1 && (
-              <>
+        <div className="px-4 pb-1 pt-4">
+          <div className="flex gap-3 overflow-x-auto pb-2">
+            {property.gallery.map((img, index) => {
+              const isActive = activeImage === img
+              return (
                 <button
+                  key={index}
                   type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    goPrev()
-                  }}
-                  className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/85 px-3 py-2 text-[18px] font-black text-[#06142f] shadow backdrop-blur"
+                  onClick={() => setActiveImage(img)}
+                  className={`shrink-0 overflow-hidden rounded-[18px] ring-2 transition ${
+                    isActive ? "ring-[#06142f]" : "ring-transparent"
+                  }`}
                 >
-                  ‹
+                  <img
+                    src={img}
+                    alt={`${property.title}-${index + 1}`}
+                    className="h-20 w-24 object-cover"
+                  />
                 </button>
-
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    goNext()
-                  }}
-                  className="absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/85 px-3 py-2 text-[18px] font-black text-[#06142f] shadow backdrop-blur"
-                >
-                  ›
-                </button>
-              </>
-            )}
-
-            <div className="absolute bottom-3 left-3 rounded-full bg-black/45 px-3 py-1 text-[12px] font-bold text-white backdrop-blur">
-              {activeIndex + 1} / {gallery.length}
-            </div>
-
-            <div className="absolute bottom-3 right-3 rounded-full bg-black/45 px-3 py-1 text-[11px] font-bold text-white backdrop-blur">
-              سحب للتنقل • ضغطتين لفول سكرين
-            </div>
-          </div>
-
-          <div className="px-4 pb-1 pt-4">
-            <div className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {gallery.map((img, index) => {
-                const isActive = activeIndex === index
-
-                return (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => setActiveIndex(index)}
-                    className={`shrink-0 overflow-hidden rounded-[18px] ring-2 transition-all duration-300 ${
-                      isActive
-                        ? "scale-[1.02] ring-[#06142f]"
-                        : "opacity-80 ring-transparent"
-                    }`}
-                  >
-                    <img
-                      src={img}
-                      alt={`${property.title}-${index + 1}`}
-                      className="h-20 w-24 object-cover"
-                    />
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          <div className="p-5 pt-3 text-right">
-            <h2 className="text-[28px] font-black leading-tight text-[#06142f]">
-              {property.title}
-            </h2>
-
-            <div className="mt-3 flex flex-wrap justify-end gap-2">
-              {supportDh === 100000 && (
-                <span className="rounded-full bg-green-50 px-3 py-1.5 text-[12px] font-black text-green-700 ring-1 ring-green-200">
-                  دعم 10 مليون
-                </span>
-              )}
-              {supportDh === 70000 && (
-                <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-[12px] font-black text-emerald-700 ring-1 ring-emerald-200">
-                  دعم 7 مليون
-                </span>
-              )}
-              {supportDh === 0 && (
-                <span className="rounded-full bg-slate-50 px-3 py-1.5 text-[12px] font-black text-slate-600 ring-1 ring-slate-200">
-                  بلا دعم
-                </span>
-              )}
-            </div>
-
-            <p className="mt-4 text-[30px] font-black text-[#2563eb]">
-              {formatDh(netPriceDh)}
-            </p>
-            <p className="mt-1 text-[15px] font-black text-slate-500">
-              الثمن الأصلي: {property.price}
-            </p>
-            {supportDh > 0 && (
-              <p className="mt-1 text-[15px] font-black text-green-700">
-                قيمة الدعم: {formatDh(supportDh)}
-              </p>
-            )}
-
-            <div className="mt-5 grid grid-cols-3 gap-3">
-              <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
-                <Ruler size={18} className="mx-auto mb-2 text-slate-500" />
-                <p className="text-[11px] font-bold text-slate-400">المساحة</p>
-                <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">
-                  {property.area} m²
-                </p>
-              </div>
-
-              <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
-                <MapPin size={18} className="mx-auto mb-2 text-slate-500" />
-                <p className="text-[11px] font-bold text-slate-400">الحي</p>
-                <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">
-                  {property.district}
-                </p>
-              </div>
-
-              <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
-                <Building2 size={18} className="mx-auto mb-2 text-slate-500" />
-                <p className="text-[11px] font-bold text-slate-400">المدينة</p>
-                <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">
-                  {property.city}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-3 grid grid-cols-3 gap-3">
-              <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
-                <BedDouble size={18} className="mx-auto mb-2 text-slate-500" />
-                <p className="text-[11px] font-bold text-slate-400">الغرف</p>
-                <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">
-                  {property.rooms}
-                </p>
-              </div>
-
-              <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
-                <Bath size={18} className="mx-auto mb-2 text-slate-500" />
-                <p className="text-[11px] font-bold text-slate-400">الحمامات</p>
-                <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">
-                  {property.bathrooms}
-                </p>
-              </div>
-
-              <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
-                <ChefHat size={18} className="mx-auto mb-2 text-slate-500" />
-                <p className="text-[11px] font-bold text-slate-400">المطابخ</p>
-                <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">
-                  {property.kitchens}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6 rounded-[22px] bg-slate-50 p-4">
-              <p className="text-[13px] font-bold text-slate-400">الوصف</p>
-              <p className="mt-2 text-[16px] leading-8 text-[#06142f]">
-                {property.description}
-              </p>
-            </div>
-
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              <a
-                href="https://wa.me/212678927276"
-                className="flex items-center justify-center gap-2 rounded-full bg-[#22c55e] px-4 py-3 text-[15px] font-bold text-white"
-              >
-                <MessageCircle size={18} />
-                واتساب
-              </a>
-
-              <a
-                href="tel:+212678927276"
-                className="flex items-center justify-center gap-2 rounded-full bg-[#06142f] px-4 py-3 text-[15px] font-bold text-white"
-              >
-                <Phone size={18} />
-                اتصال
-              </a>
-            </div>
-          </div>
-        </article>
-      </main>
-
-      {isFullscreen && (
-        <div
-          className="fixed inset-0 z-[999] flex items-center justify-center bg-black/95 p-4"
-          onClick={() => setIsFullscreen(false)}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-        >
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              setIsFullscreen(false)
-            }}
-            className="absolute right-4 top-4 rounded-full bg-white/15 px-4 py-2 text-[14px] font-bold text-white backdrop-blur"
-          >
-            إغلاق
-          </button>
-
-          {gallery.length > 1 && (
-            <>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  goPrev()
-                }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/15 px-4 py-3 text-[22px] font-black text-white backdrop-blur"
-              >
-                ‹
-              </button>
-
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  goNext()
-                }}
-                className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/15 px-4 py-3 text-[22px] font-black text-white backdrop-blur"
-              >
-                ›
-              </button>
-            </>
-          )}
-
-          <img
-            src={activeImage}
-            alt={property.title}
-            className="max-h-full max-w-full object-contain"
-            onClick={handleImageTap}
-            draggable={false}
-          />
-
-          <div className="absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-white/15 px-4 py-2 text-[13px] font-bold text-white backdrop-blur">
-            {activeIndex + 1} / {gallery.length} • ضغطتين للخروج
+              )
+            })}
           </div>
         </div>
-      )}
-    </>
+
+        <div className="p-5 pt-3 text-right">
+          <h2 className="text-[28px] font-black leading-tight text-[#06142f]">{property.title}</h2>
+
+          <div className="mt-3 flex flex-wrap justify-end gap-2">
+            {supportDh === 100000 && (
+              <span className="rounded-full bg-green-50 px-3 py-1.5 text-[12px] font-black text-green-700 ring-1 ring-green-200">
+                دعم 10 مليون
+              </span>
+            )}
+            {supportDh === 70000 && (
+              <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-[12px] font-black text-emerald-700 ring-1 ring-emerald-200">
+                دعم 7 مليون
+              </span>
+            )}
+            {supportDh === 0 && (
+              <span className="rounded-full bg-slate-50 px-3 py-1.5 text-[12px] font-black text-slate-600 ring-1 ring-slate-200">
+                بلا دعم
+              </span>
+            )}
+          </div>
+
+          <p className="mt-4 text-[30px] font-black text-[#2563eb]">{formatDh(netPriceDh)}</p>
+          <p className="mt-1 text-[15px] font-black text-slate-500">الثمن الأصلي: {property.price}</p>
+          {supportDh > 0 && (
+            <p className="mt-1 text-[15px] font-black text-green-700">قيمة الدعم: {formatDh(supportDh)}</p>
+          )}
+
+          <div className="mt-5 grid grid-cols-3 gap-3">
+            <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
+              <Ruler size={18} className="mx-auto mb-2 text-slate-500" />
+              <p className="text-[11px] font-bold text-slate-400">المساحة</p>
+              <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{property.area} m²</p>
+            </div>
+
+            <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
+              <MapPin size={18} className="mx-auto mb-2 text-slate-500" />
+              <p className="text-[11px] font-bold text-slate-400">الحي</p>
+              <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{property.district}</p>
+            </div>
+
+            <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
+              <Building2 size={18} className="mx-auto mb-2 text-slate-500" />
+              <p className="text-[11px] font-bold text-slate-400">المدينة</p>
+              <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{property.city}</p>
+            </div>
+          </div>
+
+          <div className="mt-3 grid grid-cols-3 gap-3">
+            <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
+              <BedDouble size={18} className="mx-auto mb-2 text-slate-500" />
+              <p className="text-[11px] font-bold text-slate-400">الغرف</p>
+              <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{property.rooms}</p>
+            </div>
+
+            <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
+              <Bath size={18} className="mx-auto mb-2 text-slate-500" />
+              <p className="text-[11px] font-bold text-slate-400">الحمامات</p>
+              <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{property.bathrooms}</p>
+            </div>
+
+            <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
+              <ChefHat size={18} className="mx-auto mb-2 text-slate-500" />
+              <p className="text-[11px] font-bold text-slate-400">المطابخ</p>
+              <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{property.kitchens}</p>
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-[22px] bg-slate-50 p-4">
+            <p className="text-[13px] font-bold text-slate-400">الوصف</p>
+            <p className="mt-2 text-[16px] leading-8 text-[#06142f]">{property.description}</p>
+          </div>
+
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <a
+              href="https://wa.me/212678927276"
+              className="flex items-center justify-center gap-2 rounded-full bg-[#22c55e] px-4 py-3 text-[15px] font-bold text-white"
+            >
+              <MessageCircle size={18} />
+              واتساب
+            </a>
+
+            <a
+              href="tel:+212678927276"
+              className="flex items-center justify-center gap-2 rounded-full bg-[#06142f] px-4 py-3 text-[15px] font-bold text-white"
+            >
+              <Phone size={18} />
+              اتصال
+            </a>
+          </div>
+        </div>
+      </article>
+    </main>
   )
 }
+
 export default function App() {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null)
   const [currentPage, setCurrentPage] = useState<"home" | "login" | "profile">("home")
