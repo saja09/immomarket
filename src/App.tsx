@@ -7,6 +7,9 @@ import {
   ArrowRight,
   MessageCircle,
   User,
+  BedDouble,
+  Bath,
+  ChefHat,
 } from "lucide-react"
 import SearchBar from "./components/SearchBar"
 import Login from "./pages/Login"
@@ -18,8 +21,12 @@ type Property = {
   city: string
   district: string
   area: number
+  rooms: number
+  bathrooms: number
+  kitchens: number
   price: string
   image: string
+  gallery: string[]
   description: string
 }
 
@@ -42,6 +49,7 @@ type ParsedSearch = {
   maxArea: number | null
   minArea: number | null
   sortMode: SortMode
+  supportDh: number | null
   explanation: string[]
 }
 
@@ -52,9 +60,18 @@ const properties: Property[] = [
     city: "سيدي علال البحراوي",
     district: "حي الأمل",
     area: 62,
+    rooms: 2,
+    bathrooms: 1,
+    kitchens: 1,
     price: "430,000 DH",
     image:
       "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
+    gallery: [
+      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
+    ],
     description: "شقة مناسبة للسكن الأول، قريبة من الخدمات اليومية وفي موقع هادئ.",
   },
   {
@@ -63,9 +80,18 @@ const properties: Property[] = [
     city: "سيدي علال البحراوي",
     district: "حي النهضة",
     area: 78,
+    rooms: 3,
+    bathrooms: 2,
+    kitchens: 1,
     price: "520,000 DH",
     image:
       "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1200&q=80",
+    gallery: [
+      "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
+    ],
     description: "شقة مريحة للعائلة، بتوزيع زوين وقريبة للطريق الوطنية.",
   },
   {
@@ -74,10 +100,19 @@ const properties: Property[] = [
     city: "سيدي علال البحراوي",
     district: "حي الفتح",
     area: 84,
+    rooms: 3,
+    bathrooms: 2,
+    kitchens: 1,
     price: "610,000 DH",
     image:
       "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80",
-    description: "شقة حديثة بتصميم عملي وموقع مناسب للتنقل نحو الرباط والخميسات.",
+    gallery: [
+      "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
+    ],
+    description: "شقة حديثة بتصميم عملي وموقع مناسب للتنقل.",
   },
   {
     id: 4,
@@ -85,10 +120,19 @@ const properties: Property[] = [
     city: "سيدي علال البحراوي",
     district: "وسط المدينة",
     area: 46,
+    rooms: 1,
+    bathrooms: 1,
+    kitchens: 1,
     price: "320,000 DH",
     image:
       "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
-    description: "استوديو مناسب للاستثمار أو السكن الفردي، قريب من الحركة التجارية.",
+    gallery: [
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
+    ],
+    description: "استوديو مناسب للاستثمار أو السكن الفردي.",
   },
   {
     id: 5,
@@ -96,10 +140,19 @@ const properties: Property[] = [
     city: "سيدي علال البحراوي",
     district: "حي السعادة",
     area: 240,
+    rooms: 5,
+    bathrooms: 3,
+    kitchens: 2,
     price: "1,450,000 DH",
     image:
       "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=80",
-    description: "فيلا مناسبة لعائلة كبيرة، جو هادئ وقرب من الطريق السيار.",
+    gallery: [
+      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1600566752355-35792bedcfea?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?auto=format&fit=crop&w=1200&q=80",
+    ],
+    description: "فيلا مناسبة لعائلة كبيرة في جو هادئ.",
   },
   {
     id: 6,
@@ -107,10 +160,19 @@ const properties: Property[] = [
     city: "سيدي علال البحراوي",
     district: "قرب السوق الأسبوعي",
     area: 132,
+    rooms: 4,
+    bathrooms: 2,
+    kitchens: 1,
     price: "890,000 DH",
     image:
       "https://images.unsplash.com/photo-1572120360610-d971b9d7767c?auto=format&fit=crop&w=1200&q=80",
-    description: "منزل مستقل في موقع مطلوب، قريب للسوق الأسبوعي والخدمات.",
+    gallery: [
+      "https://images.unsplash.com/photo-1572120360610-d971b9d7767c?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1600566752355-35792bedcfea?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80",
+    ],
+    description: "منزل مستقل في موقع مطلوب وقريب للخدمات.",
   },
 ]
 
@@ -143,6 +205,16 @@ function millionCentimesToDh(value: number) {
   return value * 10000
 }
 
+function getHousingSupportDh(priceDh: number) {
+  if (priceDh <= 300000) return 100000
+  if (priceDh <= 700000) return 70000
+  return 0
+}
+
+function getNetPriceAfterSupportDh(priceDh: number) {
+  return Math.max(0, priceDh - getHousingSupportDh(priceDh))
+}
+
 const cityAliases: Record<string, string[]> = {
   "سيدي علال البحراوي": [
     "سيدي علال البحراوي",
@@ -154,15 +226,12 @@ const cityAliases: Record<string, string[]> = {
 }
 
 const districtAliases: Record<string, string[]> = {
-  "حي الأمل": ["حي الأمل", "الامل", "حي الامل"],
+  "حي الأمل": ["حي الأمل", "حي الامل", "الامل"],
   "حي النهضة": ["حي النهضة", "النهضة"],
   "حي الفتح": ["حي الفتح", "الفتح"],
   "حي السعادة": ["حي السعادة", "السعادة"],
-  "حي المسيرة": ["حي المسيرة", "المسيرة"],
   "وسط المدينة": ["وسط المدينة", "المدينة", "الوسط"],
   "قرب السوق الأسبوعي": ["قرب السوق الأسبوعي", "السوق الأسبوعي", "قرب السوق"],
-  "قرب الطريق الوطنية": ["قرب الطريق الوطنية", "الطريق الوطنية"],
-  "قرب الطريق السيار": ["قرب الطريق السيار", "الطريق السيار"],
 }
 
 const propertyTypeAliases: Record<"شقة" | "فيلا" | "منزل" | "استوديو", string[]> = {
@@ -193,11 +262,11 @@ const stopWords = [
   "ملايين",
   "درهم",
   "dh",
-  "متر",
-  "مربع",
   "حتى",
   "فوق",
-  "تحت",
+  "حي",
+  "دعم",
+  "بلا",
 ]
 
 function includesAny(normalizedQuery: string, words: string[]) {
@@ -247,7 +316,7 @@ function parseSmartQuery(query: string): ParsedSearch {
     explanation.push("الترتيب: الأرخص أولاً")
   } else if (includesAny(normalized, luxuryWords)) {
     sortMode = "luxury"
-    explanation.push("الترتيب: الأفخم / الأرقى أولاً")
+    explanation.push("الترتيب: الأفخم أولاً")
   } else if (includesAny(normalized, bestWords)) {
     sortMode = "best"
     explanation.push("الترتيب: الأحسن أولاً")
@@ -255,6 +324,7 @@ function parseSmartQuery(query: string): ParsedSearch {
 
   let minPriceDh: number | null = null
   let maxPriceDh: number | null = null
+  let supportDh: number | null = null
 
   const betweenMillionMatch =
     normalized.match(/(?:ما ?بين|بين)\s*(\d+)\s*(?:و|الى|الي|حتى|-)\s*(\d+)\s*(?:مليون|ملايين)?/) ||
@@ -265,9 +335,7 @@ function parseSmartQuery(query: string): ParsedSearch {
     const second = Number(betweenMillionMatch[2])
     minPriceDh = millionCentimesToDh(Math.min(first, second))
     maxPriceDh = millionCentimesToDh(Math.max(first, second))
-    explanation.push(
-      `الثمن: بين ${formatDh(minPriceDh)} و ${formatDh(maxPriceDh)}`
-    )
+    explanation.push(`الثمن: بين ${formatDh(minPriceDh)} و ${formatDh(maxPriceDh)}`)
   } else {
     const lessThanMillionMatch =
       normalized.match(/(?:اقل من|تحت|دون|حتى)\s*(\d+)\s*(?:مليون|ملايين)?/)
@@ -283,6 +351,17 @@ function parseSmartQuery(query: string): ParsedSearch {
     }
   }
 
+  if (normalized.includes("دعم 10 مليون") || normalized.includes("دعم 100000")) {
+    supportDh = 100000
+    explanation.push("الدعم: 10 مليون")
+  } else if (normalized.includes("دعم 7 مليون") || normalized.includes("دعم 70000")) {
+    supportDh = 70000
+    explanation.push("الدعم: 7 مليون")
+  } else if (normalized.includes("بلا دعم")) {
+    supportDh = 0
+    explanation.push("الدعم: بلا دعم")
+  }
+
   return {
     raw: query,
     normalized,
@@ -294,8 +373,17 @@ function parseSmartQuery(query: string): ParsedSearch {
     minArea: null,
     maxArea: null,
     sortMode,
+    supportDh,
     explanation,
   }
+}
+
+function detectPropertyType(property: Property): "شقة" | "فيلا" | "منزل" | "استوديو" {
+  const n = normalizeArabic(property.title + " " + property.description)
+  if (n.includes("فيلا") || n.includes("villa")) return "فيلا"
+  if (n.includes("استوديو") || n.includes("studio")) return "استوديو"
+  if (n.includes("منزل") || n.includes("دار") || n.includes("بيت")) return "منزل"
+  return "شقة"
 }
 
 function filterPropertiesList(list: Property[], parsedSearch: ParsedSearch, rawQuery: string) {
@@ -303,6 +391,7 @@ function filterPropertiesList(list: Property[], parsedSearch: ParsedSearch, rawQ
 
   const filtered = list.filter((property) => {
     const propertyPriceDh = priceStringToDh(property.price)
+    const propertySupportDh = getHousingSupportDh(propertyPriceDh)
     const normalizedTitle = normalizeArabic(property.title)
     const normalizedCity = normalizeArabic(property.city)
     const normalizedDistrict = normalizeArabic(property.district)
@@ -314,7 +403,6 @@ function filterPropertiesList(list: Property[], parsedSearch: ParsedSearch, rawQ
         property.city,
         property.district,
         property.description,
-        property.area.toString(),
         property.price,
       ].join(" ")
     )
@@ -341,6 +429,10 @@ function filterPropertiesList(list: Property[], parsedSearch: ParsedSearch, rawQ
     }
 
     if (parsedSearch.maxPriceDh !== null && propertyPriceDh > parsedSearch.maxPriceDh) {
+      return false
+    }
+
+    if (parsedSearch.supportDh !== null && propertySupportDh !== parsedSearch.supportDh) {
       return false
     }
 
@@ -427,13 +519,13 @@ function PropertyCard({
   property: Property
   onOpen: (property: Property) => void
 }) {
+  const priceDh = priceStringToDh(property.price)
+  const supportDh = getHousingSupportDh(priceDh)
+  const netPriceDh = getNetPriceAfterSupportDh(priceDh)
+
   return (
     <article className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
-      <button
-        type="button"
-        onClick={() => onOpen(property)}
-        className="block w-full text-right"
-      >
+      <button type="button" onClick={() => onOpen(property)} className="block w-full text-right">
         <img
           src={property.image}
           alt={property.title}
@@ -446,30 +538,82 @@ function PropertyCard({
           {property.title}
         </h3>
 
+        <div className="mt-3 flex flex-wrap justify-end gap-2">
+          {supportDh === 100000 && (
+            <span className="rounded-full bg-green-50 px-3 py-1.5 text-[12px] font-black text-green-700 ring-1 ring-green-200">
+              دعم 10 مليون
+            </span>
+          )}
+          {supportDh === 70000 && (
+            <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-[12px] font-black text-emerald-700 ring-1 ring-emerald-200">
+              دعم 7 مليون
+            </span>
+          )}
+          {supportDh === 0 && (
+            <span className="rounded-full bg-slate-50 px-3 py-1.5 text-[12px] font-black text-slate-600 ring-1 ring-slate-200">
+              بلا دعم
+            </span>
+          )}
+        </div>
+
         <div className="mt-4 grid grid-cols-3 gap-3">
           <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
             <Ruler size={18} className="mx-auto mb-2 text-slate-500" />
             <p className="text-[11px] font-bold text-slate-400">المساحة</p>
-            <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">
-              {property.area} m²
-            </p>
+            <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{property.area} m²</p>
           </div>
 
           <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
             <MapPin size={18} className="mx-auto mb-2 text-slate-500" />
             <p className="text-[11px] font-bold text-slate-400">الحي</p>
-            <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">
-              {property.district}
-            </p>
+            <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{property.district}</p>
           </div>
 
           <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
             <Building2 size={18} className="mx-auto mb-2 text-slate-500" />
             <p className="text-[11px] font-bold text-slate-400">المدينة</p>
-            <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">
-              {property.city}
-            </p>
+            <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{property.city}</p>
           </div>
+        </div>
+
+        <div className="mt-3 grid grid-cols-3 gap-3">
+          <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
+            <BedDouble size={18} className="mx-auto mb-2 text-slate-500" />
+            <p className="text-[11px] font-bold text-slate-400">الغرف</p>
+            <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{property.rooms}</p>
+          </div>
+
+          <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
+            <Bath size={18} className="mx-auto mb-2 text-slate-500" />
+            <p className="text-[11px] font-bold text-slate-400">الحمامات</p>
+            <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{property.bathrooms}</p>
+          </div>
+
+          <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
+            <ChefHat size={18} className="mx-auto mb-2 text-slate-500" />
+            <p className="text-[11px] font-bold text-slate-400">المطابخ</p>
+            <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{property.kitchens}</p>
+          </div>
+        </div>
+
+        <div className="mt-5 rounded-[20px] bg-[#f8fafc] p-4 ring-1 ring-slate-200">
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-right">
+              <p className="text-[11px] font-bold text-slate-400">الثمن الأصلي</p>
+              <p className="text-[20px] font-black text-[#06142f]">{property.price}</p>
+            </div>
+
+            <div className="text-right">
+              <p className="text-[11px] font-bold text-slate-400">بعد الدعم</p>
+              <p className="text-[22px] font-black text-[#2563eb]">{formatDh(netPriceDh)}</p>
+            </div>
+          </div>
+
+          {supportDh > 0 && (
+            <p className="mt-2 text-[13px] font-black text-green-700">
+              قيمة الدعم: {formatDh(supportDh)}
+            </p>
+          )}
         </div>
 
         <div className="mt-5 flex items-end justify-between gap-3">
@@ -480,13 +624,6 @@ function PropertyCard({
           >
             التفاصيل
           </button>
-
-          <div className="text-right">
-            <p className="text-[11px] font-bold text-slate-400">السعر</p>
-            <p className="text-[28px] font-black leading-none text-[#2563eb]">
-              {property.price}
-            </p>
-          </div>
         </div>
       </div>
     </article>
@@ -500,6 +637,15 @@ function PropertyDetails({
   property: Property
   onBack: () => void
 }) {
+  const priceDh = priceStringToDh(property.price)
+  const supportDh = getHousingSupportDh(priceDh)
+  const netPriceDh = getNetPriceAfterSupportDh(priceDh)
+  const [activeImage, setActiveImage] = useState(property.gallery[0] || property.image)
+
+  useEffect(() => {
+    setActiveImage(property.gallery[0] || property.image)
+  }, [property])
+
   return (
     <main className="mx-auto max-w-md px-4 pb-16 pt-4">
       <button
@@ -512,52 +658,102 @@ function PropertyDetails({
       </button>
 
       <article className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
-        <img
-          src={property.image}
-          alt={property.title}
-          className="h-[260px] w-full object-cover"
-        />
+        <img src={activeImage} alt={property.title} className="h-[280px] w-full object-cover" />
 
-        <div className="p-5 text-right">
-          <h2 className="text-[28px] font-black leading-tight text-[#06142f]">
-            {property.title}
-          </h2>
+        <div className="px-4 pb-1 pt-4">
+          <div className="flex gap-3 overflow-x-auto pb-2">
+            {property.gallery.map((img, index) => {
+              const isActive = activeImage === img
+              return (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => setActiveImage(img)}
+                  className={`shrink-0 overflow-hidden rounded-[18px] ring-2 transition ${
+                    isActive ? "ring-[#06142f]" : "ring-transparent"
+                  }`}
+                >
+                  <img
+                    src={img}
+                    alt={`${property.title}-${index + 1}`}
+                    className="h-20 w-24 object-cover"
+                  />
+                </button>
+              )
+            })}
+          </div>
+        </div>
 
-          <p className="mt-3 text-[34px] font-black text-[#2563eb]">
-            {property.price}
-          </p>
+        <div className="p-5 pt-3 text-right">
+          <h2 className="text-[28px] font-black leading-tight text-[#06142f]">{property.title}</h2>
+
+          <div className="mt-3 flex flex-wrap justify-end gap-2">
+            {supportDh === 100000 && (
+              <span className="rounded-full bg-green-50 px-3 py-1.5 text-[12px] font-black text-green-700 ring-1 ring-green-200">
+                دعم 10 مليون
+              </span>
+            )}
+            {supportDh === 70000 && (
+              <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-[12px] font-black text-emerald-700 ring-1 ring-emerald-200">
+                دعم 7 مليون
+              </span>
+            )}
+            {supportDh === 0 && (
+              <span className="rounded-full bg-slate-50 px-3 py-1.5 text-[12px] font-black text-slate-600 ring-1 ring-slate-200">
+                بلا دعم
+              </span>
+            )}
+          </div>
+
+          <p className="mt-4 text-[30px] font-black text-[#2563eb]">{formatDh(netPriceDh)}</p>
+          <p className="mt-1 text-[15px] font-black text-slate-500">الثمن الأصلي: {property.price}</p>
+          {supportDh > 0 && (
+            <p className="mt-1 text-[15px] font-black text-green-700">قيمة الدعم: {formatDh(supportDh)}</p>
+          )}
 
           <div className="mt-5 grid grid-cols-3 gap-3">
             <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
               <Ruler size={18} className="mx-auto mb-2 text-slate-500" />
               <p className="text-[11px] font-bold text-slate-400">المساحة</p>
-              <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">
-                {property.area} m²
-              </p>
+              <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{property.area} m²</p>
             </div>
 
             <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
               <MapPin size={18} className="mx-auto mb-2 text-slate-500" />
               <p className="text-[11px] font-bold text-slate-400">الحي</p>
-              <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">
-                {property.district}
-              </p>
+              <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{property.district}</p>
             </div>
 
             <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
               <Building2 size={18} className="mx-auto mb-2 text-slate-500" />
               <p className="text-[11px] font-bold text-slate-400">المدينة</p>
-              <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">
-                {property.city}
-              </p>
+              <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{property.city}</p>
+            </div>
+          </div>
+
+          <div className="mt-3 grid grid-cols-3 gap-3">
+            <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
+              <BedDouble size={18} className="mx-auto mb-2 text-slate-500" />
+              <p className="text-[11px] font-bold text-slate-400">الغرف</p>
+              <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{property.rooms}</p>
+            </div>
+
+            <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
+              <Bath size={18} className="mx-auto mb-2 text-slate-500" />
+              <p className="text-[11px] font-bold text-slate-400">الحمامات</p>
+              <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{property.bathrooms}</p>
+            </div>
+
+            <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
+              <ChefHat size={18} className="mx-auto mb-2 text-slate-500" />
+              <p className="text-[11px] font-bold text-slate-400">المطابخ</p>
+              <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{property.kitchens}</p>
             </div>
           </div>
 
           <div className="mt-6 rounded-[22px] bg-slate-50 p-4">
             <p className="text-[13px] font-bold text-slate-400">الوصف</p>
-            <p className="mt-2 text-[16px] leading-8 text-[#06142f]">
-              {property.description}
-            </p>
+            <p className="mt-2 text-[16px] leading-8 text-[#06142f]">{property.description}</p>
           </div>
 
           <div className="mt-6 grid grid-cols-2 gap-3">
@@ -613,18 +809,25 @@ export default function App() {
     return filterPropertiesList(properties, parsedSearch, appliedQuery)
   }, [parsedSearch, appliedQuery])
 
+  const availableDistricts = useMemo(() => {
+    const onlyCity = properties
+      .filter((property) => property.city === "سيدي علال البحراوي")
+      .map((property) => property.district)
+
+    return Array.from(new Set(onlyCity))
+  }, [])
+
+  const availablePropertyTypes = useMemo(() => {
+    return Array.from(new Set(properties.map((property) => detectPropertyType(property))))
+  }, [])
+
   const handleSearch = () => {
     setAppliedQuery(query.trim())
     setSelectedProperty(null)
   }
 
   if (currentPage === "login") {
-    return (
-      <Login
-        onBack={() => setCurrentPage("home")}
-        onAuthSuccess={handleAuthSuccess}
-      />
-    )
+    return <Login onBack={() => setCurrentPage("home")} onAuthSuccess={handleAuthSuccess} />
   }
 
   if (currentPage === "profile" && currentUser) {
@@ -650,16 +853,15 @@ export default function App() {
       />
 
       {selectedProperty ? (
-        <PropertyDetails
-          property={selectedProperty}
-          onBack={() => setSelectedProperty(null)}
-        />
+        <PropertyDetails property={selectedProperty} onBack={() => setSelectedProperty(null)} />
       ) : (
         <>
           <SearchBar
             value={query}
             onChange={setQuery}
             onSearch={handleSearch}
+            districts={availableDistricts}
+            propertyTypes={availablePropertyTypes}
           />
 
           <main className="mx-auto mt-5 max-w-md px-4 pb-16">
@@ -669,33 +871,30 @@ export default function App() {
 
             {appliedQuery && (
               <div className="mb-4 rounded-[20px] bg-white p-4 text-right shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
-                <p className="text-[14px] font-black text-[#06142f]">
-                  فهمت البحث هكذا:
-                </p>
+                <p className="text-[14px] font-black text-[#06142f]">الفلاتر المطبقة:</p>
 
                 {parsedSearch.explanation.length > 0 ? (
-                  <div className="mt-2 space-y-1">
+                  <div className="mt-2 flex flex-wrap justify-end gap-2">
                     {parsedSearch.explanation.map((item, index) => (
-                      <p key={index} className="text-[13px] font-bold text-slate-500">
-                        • {item}
-                      </p>
+                      <span
+                        key={index}
+                        className="rounded-full bg-[#f8fafc] px-3 py-1.5 text-[12px] font-bold text-slate-600 ring-1 ring-slate-200"
+                      >
+                        {item}
+                      </span>
                     ))}
                   </div>
                 ) : (
-                  <p className="mt-2 text-[13px] font-bold text-slate-500">
-                    نتائج البحث عن: {appliedQuery}
-                  </p>
+                  <p className="mt-2 text-[13px] font-bold text-slate-500">{appliedQuery}</p>
                 )}
               </div>
             )}
 
             {filteredProperties.length === 0 ? (
               <div className="rounded-[24px] bg-white p-6 text-right shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
-                <p className="text-[18px] font-black text-[#06142f]">
-                  لا توجد عقارات مطابقة
-                </p>
+                <p className="text-[18px] font-black text-[#06142f]">لا توجد عقارات مطابقة</p>
                 <p className="mt-2 text-[14px] font-bold text-slate-500">
-                  بدل الحي أو وسع شوية الثمن، وغادي تبان ليك النتائج.
+                  بدل الحي أو وسع شوية الثمن أو غير نوع الدعم.
                 </p>
               </div>
             ) : (
