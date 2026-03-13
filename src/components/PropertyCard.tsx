@@ -1,93 +1,66 @@
-import React from "react"
+import { MapPin, Ruler, Building2 } from "lucide-react"
 
-type Property = {
-id:number
-title:string
-city:string
-district:string
-area:string
-price:string
-image:string
-}
+export default function PropertyCard({ property, onOpen }) {
+  return (
+    <article className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
 
-export default function PropertyCard({property}:{property:Property}){
+      <button
+        type="button"
+        onClick={() => onOpen(property)}
+        className="block w-full text-right"
+      >
+        <img
+          src={property.image}
+          alt={property.title}
+          className="h-[230px] w-full object-cover"
+        />
+      </button>
 
-const openDetails = ()=>{
-alert("تفاصيل العقار")
-}
+      <div className="p-5 text-right">
 
-const toggleFavorite = (e:any)=>{
-e.stopPropagation()
-alert("تم حفظ العقار")
-}
+        <h3 className="text-[21px] font-extrabold text-[#06142f]">
+          {property.title}
+        </h3>
 
-return(
+        <p className="mt-2 text-[14px] text-slate-500">
+          {property.city} - {property.district}
+        </p>
 
-<div
-className="bg-white rounded-3xl shadow-md overflow-hidden mb-6"
->
+        <div className="mt-4 grid grid-cols-2 gap-3">
 
-<div
-className="relative cursor-pointer"
-onClick={openDetails}
->
+          <div className="rounded-[16px] bg-slate-50 p-3 text-center">
+            <Ruler size={18} className="mx-auto mb-1 text-slate-500" />
+            <p className="text-[12px] text-slate-400">المساحة</p>
+            <p className="font-bold">{property.area} m²</p>
+          </div>
 
-<img
-src={property.image}
-className="w-full h-56 object-cover"
-/>
+          <div className="rounded-[16px] bg-slate-50 p-3 text-center">
+            <Building2 size={18} className="mx-auto mb-1 text-slate-500" />
+            <p className="text-[12px] text-slate-400">المدينة</p>
+            <p className="font-bold">{property.city}</p>
+          </div>
 
-<button
-onClick={toggleFavorite}
-className="absolute top-3 right-3 bg-white w-10 h-10 rounded-full shadow flex items-center justify-center text-xl"
->
-❤️
-</button>
+        </div>
 
-<div
-className="absolute bottom-3 left-3 bg-white px-4 py-2 rounded-full text-blue-600 font-bold"
->
-{property.price}
-</div>
+        <div className="mt-5 flex items-center justify-between">
 
-</div>
+          <button
+            onClick={() => onOpen(property)}
+            className="rounded-full bg-[#06142f] px-5 py-2 text-white"
+          >
+            التفاصيل
+          </button>
 
-<div className="p-5">
+          <div className="text-right">
+            <p className="text-[12px] text-slate-400">السعر</p>
+            <p className="text-[22px] font-bold text-blue-600">
+              {property.price}
+            </p>
+          </div>
 
-<h2 className="text-lg font-bold text-center mb-4">
-{property.title}
-</h2>
+        </div>
 
-<div className="grid grid-cols-3 gap-3 text-center">
-
-<div className="bg-gray-100 rounded-xl p-3">
-📏
-<p className="text-sm">{property.area}</p>
-</div>
-
-<div className="bg-gray-100 rounded-xl p-3">
-📍
-<p className="text-sm">{property.district}</p>
-</div>
-
-<div className="bg-gray-100 rounded-xl p-3">
-🏙
-<p className="text-sm">{property.city}</p>
-</div>
-
-</div>
-
-<button
-onClick={openDetails}
-className="mt-5 w-full bg-blue-900 text-white py-3 rounded-xl"
->
-التفاصيل
-</button>
-
-</div>
-
-</div>
-
-)
-
+      </div>
+    </article>
+  )
 }

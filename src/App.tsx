@@ -576,25 +576,6 @@ function PropertyCard({
           </div>
         </div>
 
-        <div className="mt-3 grid grid-cols-3 gap-3">
-          <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
-            <BedDouble size={18} className="mx-auto mb-2 text-slate-500" />
-            <p className="text-[11px] font-bold text-slate-400">الغرف</p>
-            <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{property.rooms}</p>
-          </div>
-
-          <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
-            <Bath size={18} className="mx-auto mb-2 text-slate-500" />
-            <p className="text-[11px] font-bold text-slate-400">الحمامات</p>
-            <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{property.bathrooms}</p>
-          </div>
-
-          <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
-            <ChefHat size={18} className="mx-auto mb-2 text-slate-500" />
-            <p className="text-[11px] font-bold text-slate-400">المطابخ</p>
-            <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{property.kitchens}</p>
-          </div>
-        </div>
 
         <div className="mt-5 rounded-[20px] bg-[#f8fafc] p-4 ring-1 ring-slate-200">
           <div className="flex items-center justify-between gap-3">
