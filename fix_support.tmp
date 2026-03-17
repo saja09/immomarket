@@ -1,0 +1,6 @@
+function getHousingSupportDh(supportDh: number | null | undefined) {
+  if (supportDh === null || supportDh === undefined) return null
+  const value = Number(supportDh)
+  if (isNaN(value)) return null
+  return value
+}

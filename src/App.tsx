@@ -251,14 +251,15 @@ function millionCentimesToDh(value: number) {
   return value * 10000
 }
 
-function getHousingSupportDh(priceDh: number) {
-  if (priceDh <= 300000) return 100000
-  if (priceDh <= 700000) return 70000
-  return 0
+function getHousingSupportDh(supportDh: number | null | undefined) {
+  if (supportDh === null || supportDh === undefined) return null;
+  const value = Number(supportDh);
+  if (isNaN(value)) return null;
+  return value;
 }
 
-function getNetPriceAfterSupportDh(priceDh: number) {
-  return Math.max(0, priceDh - getHousingSupportDh(priceDh))
+function getNetPriceDh(priceDh: number, supportDh: number | null | undefined) {
+  return Math.max(0, priceDh - Number(getHousingSupportDh(supportDh) || 0))
 }
 
 const cityAliases: Record<string, string[]> = {
@@ -437,7 +438,7 @@ function filterPropertiesList(list: Property[], parsedSearch: ParsedSearch, rawQ
 
   const filtered = list.filter((property) => {
     const propertyPriceDh = priceStringToDh(property.price)
-    const propertySupportDh = getHousingSupportDh(propertyPriceDh)
+    const propertySupportDh = property.supportDh
     const normalizedTitle = normalizeArabic(property.title)
     const normalizedCity = normalizeArabic(property.city)
     const normalizedDistrict = normalizeArabic(property.district)
@@ -566,8 +567,8 @@ function PropertyCard({
   onOpen: (property: Property) => void
 }) {
   const priceDh = priceStringToDh(property.price)
-  const supportDh = getHousingSupportDh(priceDh)
-  const netPriceDh = getNetPriceAfterSupportDh(priceDh)
+  const supportDh = getHousingSupportDh(property.supportDh)
+  const netPriceDh = getNetPriceDh(priceDh, property.supportDh)
 
   return (
     <article className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
@@ -664,8 +665,8 @@ function PropertyDetails({
   onBack: () => void
 }) {
   const priceDh = priceStringToDh(property.price)
-  const supportDh = getHousingSupportDh(priceDh)
-  const netPriceDh = getNetPriceAfterSupportDh(priceDh)
+  const supportDh = getHousingSupportDh(property.supportDh)
+  const netPriceDh = getNetPriceDh(priceDh, property.supportDh)
 
   const gallery =
     property.gallery && property.gallery.length > 0
