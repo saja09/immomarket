@@ -176,50 +176,6 @@ const seedProperties: Property[] = [
   },
 ]
 
-const properties: Property[] = (() => {
-  try {
-    const raw = localStorage.getItem("immomarket_admin_properties")
-    if (!raw) return seedProperties
-
-    const parsed = JSON.parse(raw)
-    if (!Array.isArray(parsed) || parsed.length === 0) return seedProperties
-
-    const visible = parsed.filter((item) => item && !item.hidden && item.status !== "sold")
-    if (visible.length === 0) return seedProperties
-
-    return visible.map((item: any, index: number) => {
-      const fallback = seedProperties[index % seedProperties.length]
-      const priceDh = Number(item.priceDh || 0)
-      const supportDh = Number(item.supportDh || 0)
-      const gallery = Array.isArray(item.gallery) ? item.gallery.filter(Boolean) : []
-      const image = item.image || gallery[0] || fallback.image
-
-      return {
-        ...fallback,
-        id: item.id ?? fallback.id ?? Date.now() + index,
-        title: item.title || fallback.title,
-        city: item.city || fallback.city,
-        district: item.district || fallback.district,
-        area: Number(item.area || fallback.area || 0),
-        priceDh,
-        supportDh,
-        price: `DH ${new Intl.NumberFormat("fr-FR").format(priceDh)}`,
-        rooms: Number(item.rooms || fallback.rooms || 0),
-        bathrooms: Number(item.bathrooms || fallback.bathrooms || 0),
-        kitchens: Number(item.kitchens || fallback.kitchens || 0),
-        description: item.description || fallback.description,
-        image,
-        gallery: gallery.length ? gallery : (fallback.gallery || [image]),
-        video: item.video || fallback.video || "",
-        lat: item.lat || fallback.lat || "",
-        lng: item.lng || fallback.lng || "",
-      }
-    })
-  } catch {
-    return seedProperties
-  }
-})()
-
 function normalizeArabic(text: string) {
   return text
     .toLowerCase()

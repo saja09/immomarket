@@ -1,0 +1,89 @@
+<div>
+  <h3 className="mb-3 text-right text-[16px] font-black text-[#06142f]">الصور والفيديو</h3>
+
+  <div className="grid gap-3">
+
+    <!-- MAIN IMAGE -->
+    <div>
+      <FieldLabel>الصورة الرئيسية</FieldLabel>
+
+      <input
+        type="file"
+        accept="image/*"
+        onChange={async (e) => {
+          const file = e.target.files?.[0]
+          if (!file) return
+
+          const fileName = `main-${Date.now()}`
+
+          const { error } = await supabase.storage
+            .from("property-media")
+            .upload(fileName, file, { upsert: true })
+
+          if (error) {
+            setMessage("خطأ في رفع الصورة")
+            return
+          }
+
+          const { data } = supabase.storage
+            .from("property-media")
+            .getPublicUrl(fileName)
+
+          setImage(data.publicUrl)
+        }}
+        className="w-full border p-3 rounded-[12px]"
+      />
+
+      {image && <img src={image} className="mt-2 h-[200px] w-full object-cover rounded-[12px]" />}
+    </div>
+
+    <!-- GALLERY -->
+    <div>
+      <FieldLabel>صور gallery</FieldLabel>
+
+      <input
+        type="file"
+        multiple
+        accept="image/*"
+        onChange={async (e) => {
+          const files = e.target.files
+          if (!files) return
+
+          let urls = []
+
+          for (let i = 0; i < files.length; i++) {
+            const fileName = `gallery-${Date.now()}-${i}`
+
+            const { error } = await supabase.storage
+              .from("property-media")
+              .upload(fileName, files[i], { upsert: true })
+
+            if (!error) {
+              const { data } = supabase.storage
+                .from("property-media")
+                .getPublicUrl(fileName)
+
+              urls.push(data.publicUrl)
+            }
+          }
+
+          setGallery(urls)
+        }}
+        className="w-full border p-3 rounded-[12px]"
+      />
+
+      <div className="grid grid-cols-3 gap-2 mt-2">
+        {gallery.map((img, i) => (
+          <img key={i} src={img} className="h-[80px] object-cover rounded-[8px]" />
+        ))}
+      </div>
+    </div>
+
+    <!-- VIDEO -->
+    <div>
+      <FieldLabel>رابط الفيديو</FieldLabel>
+      <Input value={video} onChange={setVideo} placeholder="YouTube / TikTok..." />
+    </div>
+
+  </div>
+</div>
