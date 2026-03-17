@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react"
 import AdminLogin from "./AdminLogin"
-import { supabase } from "../lib/supabase"
 
 type AdminSection =
   | "dashboard"
@@ -82,6 +81,15 @@ function safeReadProperties(): AdminProperty[] {
 
 function saveProperties(list: AdminProperty[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
+}
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result || ""))
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
 }
 
 function DesktopSidebar({
@@ -467,8 +475,12 @@ function Dashboard({
 
 function AddPropertyPage({
   onAdd,
+  editingProperty,
+  onCancelEdit,
 }: {
-  onAdd: (property: Omit<AdminProperty, "id" | "createdAt">) => void
+  onAdd: (property: Omit<AdminProperty, "id" | "createdAt">, editingId?: number) => void
+  editingProperty: AdminProperty | null
+  onCancelEdit: () => void
 }) {
   const [title, setTitle] = useState("")
   const [city, setCity] = useState("سيدي علال البحراوي")
@@ -489,6 +501,35 @@ function AddPropertyPage({
   const [featured, setFeatured] = useState(false)
   const [hidden, setHidden] = useState(false)
   const [message, setMessage] = useState("")
+  const [uploadingMain, setUploadingMain] = useState(false)
+  const [uploadingGallery, setUploadingGallery] = useState(false)
+
+  useEffect(() => {
+    if (!editingProperty) {
+      resetForm()
+      return
+    }
+
+    setTitle(editingProperty.title)
+    setCity(editingProperty.city)
+    setDistrict(editingProperty.district)
+    setArea(String(editingProperty.area))
+    setPriceDh(String(editingProperty.priceDh))
+    setSupportDh(String(editingProperty.supportDh))
+    setRooms(String(editingProperty.rooms))
+    setBathrooms(String(editingProperty.bathrooms))
+    setKitchens(String(editingProperty.kitchens))
+    setDescription(editingProperty.description)
+    setImage(editingProperty.image)
+    setGallery(editingProperty.gallery || [])
+    setVideo(editingProperty.video)
+    setLat(editingProperty.lat)
+    setLng(editingProperty.lng)
+    setStatus(editingProperty.status)
+    setFeatured(editingProperty.featured)
+    setHidden(editingProperty.hidden)
+    setMessage("")
+  }, [editingProperty])
 
   function resetForm() {
     setTitle("")
@@ -509,22 +550,7 @@ function AddPropertyPage({
     setStatus("available")
     setFeatured(false)
     setHidden(false)
-  }
-
-  async function uploadSingleImage(file: File, folder: "main" | "gallery") {
-    const ext = file.name.split(".").pop() || "jpg"
-    const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-
-    const { error } = await supabase.storage.from("property-media").upload(fileName, file, {
-      upsert: true,
-    })
-
-    if (error) {
-      throw error
-    }
-
-    const { data } = supabase.storage.from("property-media").getPublicUrl(fileName)
-    return data.publicUrl
+    setMessage("")
   }
 
   async function handleMainImageChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -532,33 +558,59 @@ function AddPropertyPage({
     if (!file) return
 
     try {
-      setMessage("جاري رفع الصورة الرئيسية...")
-      const url = await uploadSingleImage(file, "main")
-      setImage(url)
-      setMessage("تم رفع الصورة الرئيسية بنجاح.")
+      setUploadingMain(true)
+      setMessage("جاري تجهيز الصورة الرئيسية...")
+      const dataUrl = await fileToDataUrl(file)
+      setImage(dataUrl)
+      setMessage("تم تجهيز الصورة الرئيسية بنجاح.")
     } catch {
       setMessage("وقع خطأ فرفع الصورة الرئيسية.")
+    } finally {
+      setUploadingMain(false)
     }
   }
 
   async function handleGalleryChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = e.target.files
-    if (!files || files.length === 0) return
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
 
     try {
-      setMessage("جاري رفع صور gallery...")
-      const uploadedUrls: string[] = []
+      setUploadingGallery(true)
+      setMessage("جاري تجهيز صور gallery...")
 
-      for (let i = 0; i < files.length; i++) {
-        const url = await uploadSingleImage(files[i], "gallery")
-        uploadedUrls.push(url)
+      const results = await Promise.allSettled(files.map((file) => fileToDataUrl(file)))
+      const ok = results
+        .filter((r): r is PromiseFulfilledResult<string> => r.status === "fulfilled")
+        .map((r) => r.value)
+
+      const failed = results.length - ok.length
+
+      if (!ok.length) {
+        setMessage("فشل تجهيز الصور المختارة. جرب عدد أقل أو صور بحجم أصغر.")
+        return
       }
 
-      setGallery(uploadedUrls)
-      setMessage("تم رفع صور gallery بنجاح.")
+      setGallery(ok)
+
+      if (!image && ok[0]) {
+        setImage(ok[0])
+      }
+
+      if (failed > 0) {
+        setMessage(`وقع خطأ فرفع ${failed} من الصور، والباقي ترفع مزيان.`)
+      } else {
+        setMessage(`تم تجهيز ${ok.length} صورة بنجاح.`)
+      }
     } catch {
       setMessage("وقع خطأ فرفع بعض صور gallery.")
+    } finally {
+      setUploadingGallery(false)
     }
+  }
+
+  function handleRemoveGalleryImage(index: number) {
+    const next = gallery.filter((_, i) => i !== index)
+    setGallery(next)
   }
 
   function handleSubmit(e: FormEvent) {
@@ -569,36 +621,48 @@ function AddPropertyPage({
       return
     }
 
-    onAdd({
-      title: title.trim(),
-      city: city.trim(),
-      district: district.trim(),
-      area: Number(area),
-      priceDh: Number(priceDh),
-      supportDh: Number(supportDh || 0),
-      rooms: Number(rooms),
-      bathrooms: Number(bathrooms),
-      kitchens: Number(kitchens),
-      description: description.trim(),
-      image: image.trim(),
-      gallery,
-      video: video.trim(),
-      lat: lat.trim(),
-      lng: lng.trim(),
-      status,
-      hidden,
-      featured,
-    })
+    if (!image.trim()) {
+      setMessage("خاصك تضيف الصورة الرئيسية قبل الحفظ.")
+      return
+    }
 
-    setMessage("تمت إضافة العقار بنجاح.")
+    onAdd(
+      {
+        title: title.trim(),
+        city: city.trim(),
+        district: district.trim(),
+        area: Number(area),
+        priceDh: Number(priceDh),
+        supportDh: Number(supportDh || 0),
+        rooms: Number(rooms),
+        bathrooms: Number(bathrooms),
+        kitchens: Number(kitchens),
+        description: description.trim(),
+        image: image.trim(),
+        gallery: gallery.length > 0 ? gallery : [image.trim()],
+        video: video.trim(),
+        lat: lat.trim(),
+        lng: lng.trim(),
+        status,
+        hidden,
+        featured,
+      },
+      editingProperty?.id
+    )
+
+    setMessage(editingProperty ? "تم تعديل العقار بنجاح." : "تمت إضافة العقار بنجاح.")
     resetForm()
+    onCancelEdit()
   }
 
   const finalPrice = Math.max(0, Number(priceDh || 0) - Number(supportDh || 0))
 
   return (
     <div className="space-y-4">
-      <PageHeader title="إضافة عقار" subtitle="نفس منطق معلومات العقار التي ستظهر للزوار" />
+      <PageHeader
+        title={editingProperty ? "تعديل العقار" : "إضافة عقار"}
+        subtitle="نفس منطق معلومات العقار التي ستظهر للزوار"
+      />
 
       <div className="grid gap-4 xl:grid-cols-[1.35fr_1fr]">
         <form
@@ -723,6 +787,10 @@ function AddPropertyPage({
                     className="w-full rounded-[16px] border border-slate-200 bg-white px-4 py-3 text-right outline-none focus:border-[#06142f]"
                   />
 
+                  {uploadingMain ? (
+                    <p className="mt-2 text-right text-[12px] font-bold text-slate-500">جاري تجهيز الصورة...</p>
+                  ) : null}
+
                   {image ? (
                     <div className="mt-3 overflow-hidden rounded-[16px] border border-slate-200 bg-slate-50 p-2">
                       <img src={image} alt="preview" className="h-[220px] w-full rounded-[12px] object-cover" />
@@ -740,15 +808,27 @@ function AddPropertyPage({
                     className="w-full rounded-[16px] border border-slate-200 bg-white px-4 py-3 text-right outline-none focus:border-[#06142f]"
                   />
 
+                  {uploadingGallery ? (
+                    <p className="mt-2 text-right text-[12px] font-bold text-slate-500">جاري تجهيز الصور...</p>
+                  ) : null}
+
                   {gallery.length > 0 ? (
                     <div className="mt-3 grid grid-cols-3 gap-2">
                       {gallery.map((img, i) => (
-                        <img
-                          key={i}
-                          src={img}
-                          alt={`gallery-${i}`}
-                          className="h-[90px] w-full rounded-[12px] object-cover"
-                        />
+                        <div key={i} className="relative">
+                          <img
+                            src={img}
+                            alt={`gallery-${i}`}
+                            className="h-[90px] w-full rounded-[12px] object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveGalleryImage(i)}
+                            className="absolute left-1 top-1 rounded-full bg-black/70 px-2 py-1 text-[10px] font-black text-white"
+                          >
+                            حذف
+                          </button>
+                        </div>
                       ))}
                     </div>
                   ) : null}
@@ -756,7 +836,11 @@ function AddPropertyPage({
 
                 <div>
                   <FieldLabel>رابط الفيديو</FieldLabel>
-                  <Input value={video} onChange={setVideo} placeholder="رابط YouTube / TikTok / Instagram / Facebook" />
+                  <Input
+                    value={video}
+                    onChange={setVideo}
+                    placeholder="رابط YouTube / TikTok / Instagram / Facebook"
+                  />
                 </div>
               </div>
             </div>
@@ -793,12 +877,25 @@ function AddPropertyPage({
             <p className="mt-4 text-right text-[12px] font-bold text-[#2563eb]">{message}</p>
           ) : null}
 
-          <div className="mt-4 flex justify-end">
+          <div className="mt-4 flex justify-end gap-3">
+            {editingProperty ? (
+              <button
+                type="button"
+                onClick={() => {
+                  resetForm()
+                  onCancelEdit()
+                }}
+                className="rounded-[16px] bg-slate-100 px-5 py-3 text-[14px] font-bold text-[#06142f]"
+              >
+                إلغاء التعديل
+              </button>
+            ) : null}
+
             <button
               type="submit"
               className="rounded-[16px] bg-[#06142f] px-5 py-3 text-[14px] font-bold text-white"
             >
-              حفظ العقار
+              {editingProperty ? "حفظ التعديل" : "حفظ العقار"}
             </button>
           </div>
         </form>
@@ -810,17 +907,17 @@ function AddPropertyPage({
               "تعمر نفس معلومات صفحة العقار للزائر",
               "العقار يتحفظ مباشرة فالأدمن",
               "يمكن من بعد ربطه بالواجهة العامة",
-              "الصور كتترفع مباشرة لـ Supabase Storage",
+              "تعديل العقار خدام من نفس الصفحة",
             ]}
           />
 
           <InfoBox
             title="ملاحظات"
             items={[
-              "الصورة الرئيسية مهمة للعرض الأول",
-              "gallery كترفع متعددة من الهاتف أو الحاسوب",
-              "lat/lng غادي يفيدونا فالماب",
-              "الثمن بعد الدعم كيتحسب تلقائياً",
+              "الصورة الرئيسية ضرورية قبل الحفظ",
+              "gallery كتقبل عدد كبير ولكن اللي يفشل ما يعطلش الكل",
+              "الفيديو حالياً يبقى رابط",
+              "من بعد نربطو كلشي مع Supabase",
             ]}
           />
 
@@ -873,12 +970,14 @@ function PropertiesPage({
   onToggleHidden,
   onToggleFeatured,
   onChangeStatus,
+  onEdit,
 }: {
   properties: AdminProperty[]
   onDelete: (id: number) => void
   onToggleHidden: (id: number) => void
   onToggleFeatured: (id: number) => void
   onChangeStatus: (id: number, status: PropertyStatus) => void
+  onEdit: (property: AdminProperty) => void
 }) {
   return (
     <div className="space-y-4">
@@ -898,6 +997,14 @@ function PropertiesPage({
                 <div key={property.id} className="rounded-[18px] border border-slate-200 bg-[#fcfcfd] p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => onEdit(property)}
+                        className="rounded-full bg-blue-50 px-3 py-2 text-[11px] font-bold text-blue-700"
+                      >
+                        تعديل
+                      </button>
+
                       <button
                         type="button"
                         onClick={() => onToggleHidden(property.id)}
@@ -1103,6 +1210,7 @@ export default function AdminApp() {
   const [isAdmin, setIsAdmin] = useState(localStorage.getItem("immomarket_admin") === "true")
   const [section, setSection] = useState<AdminSection>("dashboard")
   const [properties, setProperties] = useState<AdminProperty[]>([])
+  const [editingProperty, setEditingProperty] = useState<AdminProperty | null>(null)
 
   useEffect(() => {
     setProperties(safeReadProperties())
@@ -1113,12 +1221,27 @@ export default function AdminApp() {
     saveProperties(next)
   }
 
-  function handleAddProperty(property: Omit<AdminProperty, "id" | "createdAt">) {
+  function handleAddProperty(property: Omit<AdminProperty, "id" | "createdAt">, editingId?: number) {
+    if (editingId) {
+      const next = properties.map((item) =>
+        item.id === editingId
+          ? {
+              ...item,
+              ...property,
+            }
+          : item
+      )
+      updateProperties(next)
+      setSection("properties")
+      return
+    }
+
     const nextItem: AdminProperty = {
       ...property,
       id: Date.now(),
       createdAt: new Date().toISOString(),
     }
+
     updateProperties([nextItem, ...properties])
     setSection("properties")
   }
@@ -1139,6 +1262,15 @@ export default function AdminApp() {
     updateProperties(properties.map((item) => (item.id === id ? { ...item, status } : item)))
   }
 
+  function handleEdit(property: AdminProperty) {
+    setEditingProperty(property)
+    setSection("add-property")
+  }
+
+  function handleCancelEdit() {
+    setEditingProperty(null)
+  }
+
   function handleLogin() {
     setIsAdmin(true)
     setSection("dashboard")
@@ -1157,7 +1289,13 @@ export default function AdminApp() {
         return <Dashboard onNavigate={setSection} properties={properties} />
 
       case "add-property":
-        return <AddPropertyPage onAdd={handleAddProperty} />
+        return (
+          <AddPropertyPage
+            onAdd={handleAddProperty}
+            editingProperty={editingProperty}
+            onCancelEdit={handleCancelEdit}
+          />
+        )
 
       case "properties":
         return (
@@ -1167,6 +1305,7 @@ export default function AdminApp() {
             onToggleHidden={handleToggleHidden}
             onToggleFeatured={handleToggleFeatured}
             onChangeStatus={handleChangeStatus}
+            onEdit={handleEdit}
           />
         )
 
@@ -1226,7 +1365,7 @@ export default function AdminApp() {
       default:
         return <Dashboard onNavigate={setSection} properties={properties} />
     }
-  }, [section, properties])
+  }, [section, properties, editingProperty])
 
   if (!isAdmin) {
     return <AdminLogin onLogin={handleLogin} />
