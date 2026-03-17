@@ -577,17 +577,16 @@ function PropertyCard({
         </div>
 
 
-        <div className="mt-5 rounded-[20px] bg-[#f8fafc] p-4 ring-1 ring-slate-200">
-          <div className="flex items-center justify-between gap-3">
-            <div className="text-right">
+        <div className="mt-5 rounded-[20px] bg-[#f8fafc] p-4 ring-1 ring-slate-200 text-center">
+          <div className="flex flex-col items-center justify-center text-center gap-2">
+            <div className="text-center">
               <p className="text-[11px] font-bold text-slate-400">الثمن الأصلي</p>
-              <p className="text-[20px] font-black text-[#06142f]">{property.price}</p>
+              <p className="mt-2 text-[34px] font-black text-[#2563eb] tracking-tight text-center">
+  {property.price}
+</p>
             </div>
 
-            <div className="text-right">
-              <p className="text-[11px] font-bold text-slate-400">بعد الدعم</p>
-              <p className="text-[22px] font-black text-[#2563eb]">{formatDh(netPriceDh)}</p>
-            </div>
+  
           </div>
 
           {supportDh > 0 && (
@@ -830,17 +829,20 @@ function PropertyDetails({
               )}
             </div>
 
-            <p className="mt-4 text-[30px] font-black text-[#2563eb]">
-              {formatDh(netPriceDh)}
-            </p>
-            <p className="mt-1 text-[15px] font-black text-slate-500">
-              الثمن الأصلي: {property.price}
-            </p>
-            {supportDh > 0 && (
-              <p className="mt-1 text-[15px] font-black text-green-700">
-                قيمة الدعم: {formatDh(supportDh)}
+            
+            <div className="mt-4 rounded-[20px] bg-[#f8fafc] p-4 ring-1 ring-slate-200 text-center text-center">
+              <p className="text-[13px] font-bold text-slate-400">
+                الثمن الأصلي
               </p>
-            )}
+              <p className="mt-2 text-[34px] font-black text-[#2563eb] tracking-tight text-center">
+                {property.price}
+              </p>
+              {supportDh > 0 && (
+                <p className="mt-2 text-[15px] font-black text-green-700 text-center">
+                  قيمة الدعم: {formatDh(supportDh)}
+                </p>
+              )}
+            </div>
 
             <div className="mt-5 grid grid-cols-3 gap-3">
               <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
