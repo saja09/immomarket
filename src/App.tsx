@@ -903,7 +903,36 @@ function PropertyDetails({
               </p>
             </div>
 
-            <div className="mt-6 grid grid-cols-2 gap-3">
+            
+<div className="mt-6 rounded-[22px] bg-slate-50 p-4">
+  <p className="text-[13px] font-bold text-slate-400">الموقع</p>
+
+  <div className="mt-3 overflow-hidden rounded-[18px]">
+    <iframe
+      src={`https://maps.google.com/maps?q=${encodeURIComponent(
+        `${property.title} ${property.district} ${property.city} Morocco`
+      )}&z=15&output=embed`}
+      width="100%"
+      height="200"
+      style={{ border: 0 }}
+      loading="lazy"
+    ></iframe>
+  </div>
+
+  <a
+    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+      `${property.title} ${property.district} ${property.city} Morocco`
+    )}`}
+    target="_blank"
+    rel="noreferrer"
+    className="mt-3 flex items-center justify-center rounded-full bg-[#2563eb] px-4 py-3 text-[15px] font-bold text-white"
+  >
+    فتح في Google Maps
+  </a>
+</div>
+
+
+<div className="mt-6 grid grid-cols-2 gap-3">
               <a
                 href="https://wa.me/212678927276"
                 className="flex items-center justify-center gap-2 rounded-full bg-[#22c55e] px-4 py-3 text-[15px] font-bold text-white"
