@@ -28,6 +28,7 @@ type Property = {
   image: string
   gallery: string[]
   description: string
+  amenities?: string[]
 }
 
 type SavedUser = {
@@ -208,6 +209,7 @@ const properties: Property[] = (() => {
         bathrooms: Number(item.bathrooms || fallback.bathrooms || 0),
         kitchens: Number(item.kitchens || fallback.kitchens || 0),
         description: item.description || fallback.description,
+        amenities: Array.isArray(item.amenities) ? item.amenities : [],
         image,
         gallery: gallery.length ? gallery : (fallback.gallery || [image]),
         video: item.video || fallback.video || "",

@@ -26,6 +26,7 @@ type AdminProperty = {
   bathrooms: number
   kitchens: number
   description: string
+  amenities: string[]
   image: string
   gallery: string[]
   video: string
@@ -492,6 +493,7 @@ function AddPropertyPage({
   const [bathrooms, setBathrooms] = useState("1")
   const [kitchens, setKitchens] = useState("1")
   const [description, setDescription] = useState("")
+  const [amenitiesText, setAmenitiesText] = useState("")
   const [image, setImage] = useState("")
   const [gallery, setGallery] = useState<string[]>([])
   const [video, setVideo] = useState("")
@@ -503,6 +505,7 @@ function AddPropertyPage({
   const [message, setMessage] = useState("")
   const [uploadingMain, setUploadingMain] = useState(false)
   const [uploadingGallery, setUploadingGallery] = useState(false)
+  const [activeIndex, setActiveIndex] = useState(0)
 
   useEffect(() => {
     if (!editingProperty) {
@@ -520,6 +523,7 @@ function AddPropertyPage({
     setBathrooms(String(editingProperty.bathrooms))
     setKitchens(String(editingProperty.kitchens))
     setDescription(editingProperty.description)
+    setAmenitiesText((editingProperty.amenities || []).join("\n"))
     setImage(editingProperty.image)
     setGallery(editingProperty.gallery || [])
     setVideo(editingProperty.video)
@@ -529,6 +533,7 @@ function AddPropertyPage({
     setFeatured(editingProperty.featured)
     setHidden(editingProperty.hidden)
     setMessage("")
+    setActiveIndex(0)
   }, [editingProperty])
 
   function resetForm() {
@@ -542,6 +547,7 @@ function AddPropertyPage({
     setBathrooms("1")
     setKitchens("1")
     setDescription("")
+    setAmenitiesText("")
     setImage("")
     setGallery([])
     setVideo("")
@@ -551,6 +557,7 @@ function AddPropertyPage({
     setFeatured(false)
     setHidden(false)
     setMessage("")
+    setActiveIndex(0)
   }
 
   async function handleMainImageChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -562,6 +569,10 @@ function AddPropertyPage({
       setMessage("جاري تجهيز الصورة الرئيسية...")
       const dataUrl = await fileToDataUrl(file)
       setImage(dataUrl)
+      if (!gallery.length) {
+        setGallery([dataUrl])
+      }
+      setActiveIndex(0)
       setMessage("تم تجهيز الصورة الرئيسية بنجاح.")
     } catch {
       setMessage("وقع خطأ فرفع الصورة الرئيسية.")
@@ -590,10 +601,11 @@ function AddPropertyPage({
         return
       }
 
-      setGallery(ok)
+      const nextGallery = [...gallery, ...ok]
+      setGallery(nextGallery)
 
-      if (!image && ok[0]) {
-        setImage(ok[0])
+      if (!image && nextGallery[0]) {
+        setImage(nextGallery[0])
       }
 
       if (failed > 0) {
@@ -610,7 +622,22 @@ function AddPropertyPage({
 
   function handleRemoveGalleryImage(index: number) {
     const next = gallery.filter((_, i) => i !== index)
+    const removed = gallery[index]
     setGallery(next)
+
+    if (image === removed) {
+      setImage(next[0] || "")
+      setActiveIndex(0)
+    } else if (activeIndex >= next.length) {
+      setActiveIndex(Math.max(0, next.length - 1))
+    }
+  }
+
+  function handlePickAsMain(index: number) {
+    const selected = gallery[index]
+    if (!selected) return
+    setImage(selected)
+    setActiveIndex(index)
   }
 
   function handleSubmit(e: FormEvent) {
@@ -638,6 +665,10 @@ function AddPropertyPage({
         bathrooms: Number(bathrooms),
         kitchens: Number(kitchens),
         description: description.trim(),
+        amenities: amenitiesText
+          .split("\n")
+          .map((item) => item.trim())
+          .filter(Boolean),
         image: image.trim(),
         gallery: gallery.length > 0 ? gallery : [image.trim()],
         video: video.trim(),
@@ -656,310 +687,246 @@ function AddPropertyPage({
   }
 
   const finalPrice = Math.max(0, Number(priceDh || 0) - Number(supportDh || 0))
+  const activeImage = image || gallery[activeIndex] || ""
 
   return (
     <div className="space-y-4">
       <PageHeader
         title={editingProperty ? "تعديل العقار" : "إضافة عقار"}
-        subtitle="نفس منطق معلومات العقار التي ستظهر للزوار"
+        subtitle="نفس دزين صفحة تفاصيل العقار ولكن قابلة للتعديل"
       />
 
-      <div className="grid gap-4 xl:grid-cols-[1.35fr_1fr]">
-        <form
-          onSubmit={handleSubmit}
-          className="rounded-[20px] bg-white p-4 shadow-[0_10px_24px_rgba(15,23,42,0.04)]"
-        >
-          <div className="space-y-5">
-            <div>
-              <h3 className="mb-3 text-right text-[16px] font-black text-[#06142f]">المعلومات الأساسية</h3>
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="md:col-span-2">
-                  <FieldLabel>عنوان العقار</FieldLabel>
-                  <Input value={title} onChange={setTitle} placeholder="مثال: شقة عصرية 80m²" />
-                </div>
-
-                <div>
-                  <FieldLabel>المدينة</FieldLabel>
-                  <Input value={city} onChange={setCity} placeholder="المدينة" />
-                </div>
-
-                <div>
-                  <FieldLabel>الحي</FieldLabel>
-                  <Input value={district} onChange={setDistrict} placeholder="الحي" />
-                </div>
-
-                <div>
-                  <FieldLabel>المساحة m²</FieldLabel>
-                  <Input value={area} onChange={setArea} placeholder="80" type="number" />
-                </div>
-
-                <div>
-                  <FieldLabel>الحالة</FieldLabel>
-                  <Select
-                    value={status}
-                    onChange={(v) => setStatus(v as PropertyStatus)}
-                    options={[
-                      { value: "available", label: "متاح" },
-                      { value: "negotiation", label: "تفاوض" },
-                      { value: "reserved", label: "محجوز" },
-                      { value: "sold", label: "مباع" },
-                    ]}
-                  />
-                </div>
+      <main className="mx-auto max-w-md">
+        <article className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+          <div className="relative h-[280px] w-full overflow-hidden bg-slate-100">
+            {activeImage ? (
+              <img
+                src={activeImage}
+                alt={title || "preview"}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-[14px] font-bold text-slate-500">
+                اختار الصورة الرئيسية
               </div>
-            </div>
-
-            <div>
-              <h3 className="mb-3 text-right text-[16px] font-black text-[#06142f]">الثمن والدعم</h3>
-              <div className="grid gap-3 md:grid-cols-3">
-                <div>
-                  <FieldLabel>الثمن بالدرهم</FieldLabel>
-                  <Input value={priceDh} onChange={setPriceDh} placeholder="480000" type="number" />
-                </div>
-
-                <div>
-                  <FieldLabel>الدعم السكني</FieldLabel>
-                  <Select
-                    value={supportDh}
-                    onChange={setSupportDh}
-                    options={[
-                      { value: "0", label: "بلا دعم" },
-                      { value: "70000", label: "دعم 7 مليون" },
-                      { value: "100000", label: "دعم 10 مليون" },
-                    ]}
-                  />
-                </div>
-
-                <div>
-                  <FieldLabel>الثمن بعد الدعم</FieldLabel>
-                  <div className="rounded-[16px] border border-slate-200 bg-slate-50 px-4 py-3 text-right text-[14px] font-black text-[#2563eb]">
-                    {formatDh(finalPrice)}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="mb-3 text-right text-[16px] font-black text-[#06142f]">تفاصيل العقار</h3>
-              <div className="grid gap-3 md:grid-cols-3">
-                <div>
-                  <FieldLabel>الغرف</FieldLabel>
-                  <Input value={rooms} onChange={setRooms} placeholder="2" type="number" />
-                </div>
-
-                <div>
-                  <FieldLabel>الحمامات</FieldLabel>
-                  <Input value={bathrooms} onChange={setBathrooms} placeholder="1" type="number" />
-                </div>
-
-                <div>
-                  <FieldLabel>المطابخ</FieldLabel>
-                  <Input value={kitchens} onChange={setKitchens} placeholder="1" type="number" />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="mb-3 text-right text-[16px] font-black text-[#06142f]">الموقع</h3>
-              <div className="grid gap-3 md:grid-cols-2">
-                <div>
-                  <FieldLabel>Latitude</FieldLabel>
-                  <Input value={lat} onChange={setLat} placeholder="34.015" />
-                </div>
-
-                <div>
-                  <FieldLabel>Longitude</FieldLabel>
-                  <Input value={lng} onChange={setLng} placeholder="-6.83" />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="mb-3 text-right text-[16px] font-black text-[#06142f]">الصور والفيديو</h3>
-
-              <div className="grid gap-4">
-                <div>
-                  <FieldLabel>الصورة الرئيسية</FieldLabel>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleMainImageChange}
-                    className="w-full rounded-[16px] border border-slate-200 bg-white px-4 py-3 text-right outline-none focus:border-[#06142f]"
-                  />
-
-                  {uploadingMain ? (
-                    <p className="mt-2 text-right text-[12px] font-bold text-slate-500">جاري تجهيز الصورة...</p>
-                  ) : null}
-
-                  {image ? (
-                    <div className="mt-3 overflow-hidden rounded-[16px] border border-slate-200 bg-slate-50 p-2">
-                      <img src={image} alt="preview" className="h-[220px] w-full rounded-[12px] object-cover" />
-                    </div>
-                  ) : null}
-                </div>
-
-                <div>
-                  <FieldLabel>صور gallery</FieldLabel>
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={handleGalleryChange}
-                    className="w-full rounded-[16px] border border-slate-200 bg-white px-4 py-3 text-right outline-none focus:border-[#06142f]"
-                  />
-
-                  {uploadingGallery ? (
-                    <p className="mt-2 text-right text-[12px] font-bold text-slate-500">جاري تجهيز الصور...</p>
-                  ) : null}
-
-                  {gallery.length > 0 ? (
-                    <div className="mt-3 grid grid-cols-3 gap-2">
-                      {gallery.map((img, i) => (
-                        <div key={i} className="relative">
-                          <img
-                            src={img}
-                            alt={`gallery-${i}`}
-                            className="h-[90px] w-full rounded-[12px] object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveGalleryImage(i)}
-                            className="absolute left-1 top-1 rounded-full bg-black/70 px-2 py-1 text-[10px] font-black text-white"
-                          >
-                            حذف
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-
-                <div>
-                  <FieldLabel>رابط الفيديو</FieldLabel>
-                  <Input
-                    value={video}
-                    onChange={setVideo}
-                    placeholder="رابط YouTube / TikTok / Instagram / Facebook"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="mb-3 text-right text-[16px] font-black text-[#06142f]">الوصف وإعدادات العرض</h3>
-              <div className="grid gap-3">
-                <div>
-                  <FieldLabel>وصف العقار</FieldLabel>
-                  <textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="وصف العقار..."
-                    className="min-h-[120px] w-full rounded-[16px] border border-slate-200 px-4 py-3 text-right outline-none focus:border-[#06142f]"
-                  />
-                </div>
-
-                <div className="grid gap-3 md:grid-cols-2">
-                  <label className="flex items-center justify-end gap-3 rounded-[16px] bg-slate-50 px-4 py-3">
-                    <span className="text-[13px] font-bold text-[#06142f]">عقار مميز</span>
-                    <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} />
-                  </label>
-
-                  <label className="flex items-center justify-end gap-3 rounded-[16px] bg-slate-50 px-4 py-3">
-                    <span className="text-[13px] font-bold text-[#06142f]">إخفاء العقار</span>
-                    <input type="checkbox" checked={hidden} onChange={(e) => setHidden(e.target.checked)} />
-                  </label>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
 
-          {message ? (
-            <p className="mt-4 text-right text-[12px] font-bold text-[#2563eb]">{message}</p>
-          ) : null}
+          <div className="px-4 pb-1 pt-4">
+            <div className="grid grid-cols-2 gap-3">
+              <label className="cursor-pointer rounded-full bg-[#2563eb] px-4 py-3 text-center text-[14px] font-bold text-white shadow">
+                {uploadingMain ? "جاري تجهيز الصورة..." : "تغيير الصورة الرئيسية"}
+                <input type="file" accept="image/*" onChange={handleMainImageChange} className="hidden" />
+              </label>
 
-          <div className="mt-4 flex justify-end gap-3">
-            {editingProperty ? (
-              <button
-                type="button"
-                onClick={() => {
-                  resetForm()
-                  onCancelEdit()
-                }}
-                className="rounded-[16px] bg-slate-100 px-5 py-3 text-[14px] font-bold text-[#06142f]"
-              >
-                إلغاء التعديل
-              </button>
+              <label className="cursor-pointer rounded-full bg-[#06142f] px-4 py-3 text-center text-[14px] font-bold text-white shadow">
+                {uploadingGallery ? "جاري تجهيز الصور..." : "إضافة صور gallery"}
+                <input type="file" accept="image/*" multiple onChange={handleGalleryChange} className="hidden" />
+              </label>
+            </div>
+
+            {gallery.length > 0 ? (
+              <div className="mt-4 flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {gallery.map((img, index) => {
+                  const isActive = image === img
+                  return (
+                    <div key={index} className="shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handlePickAsMain(index)}
+                        className={`overflow-hidden rounded-[18px] ring-2 transition-all ${
+                          isActive ? "ring-[#06142f]" : "ring-transparent opacity-80"
+                        }`}
+                      >
+                        <img src={img} alt={`gallery-${index}`} className="h-20 w-24 object-cover" />
+                      </button>
+
+                      <div className="mt-2 flex gap-1">
+                        <button
+                          type="button"
+                          onClick={() => handlePickAsMain(index)}
+                          className="flex-1 rounded-full bg-slate-100 px-2 py-1 text-[10px] font-black text-[#06142f]"
+                        >
+                          رئيسية
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveGalleryImage(index)}
+                          className="flex-1 rounded-full bg-red-50 px-2 py-1 text-[10px] font-black text-red-700"
+                        >
+                          حذف
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : null}
+          </div>
+
+          <form onSubmit={handleSubmit} className="p-5 pt-3 text-right">
+            <Input value={title} onChange={setTitle} placeholder="عنوان العقار" />
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <Input value={city} onChange={setCity} placeholder="المدينة" />
+              <Input value={district} onChange={setDistrict} placeholder="الحي" />
+            </div>
+
+            <div className="mt-4 rounded-[20px] bg-[#f8fafc] p-4 ring-1 ring-slate-200 text-center">
+              <p className="text-[13px] font-bold text-slate-400">الثمن الأصلي</p>
+              <input
+                type="number"
+                value={priceDh}
+                onChange={(e) => setPriceDh(e.target.value)}
+                placeholder="الثمن"
+                className="mt-2 w-full bg-transparent text-center text-[34px] font-black tracking-tight text-[#2563eb] outline-none"
+              />
+
+              <div className="mt-3">
+                <p className="mb-2 text-[12px] font-bold text-slate-500">الدعم السكني</p>
+                <Select
+                  value={supportDh}
+                  onChange={setSupportDh}
+                  options={[
+                    { value: "0", label: "بلا دعم" },
+                    { value: "70000", label: "دعم 7 مليون" },
+                    { value: "100000", label: "دعم 10 مليون" },
+                  ]}
+                />
+              </div>
+
+              <p className="mt-3 text-[14px] font-black text-green-700">
+                الثمن بعد الدعم: {formatDh(finalPrice)}
+              </p>
+            </div>
+
+            <div className="mt-5 grid grid-cols-3 gap-3">
+              <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
+                <p className="text-[11px] font-bold text-slate-400">المساحة</p>
+                <input
+                  type="number"
+                  value={area}
+                  onChange={(e) => setArea(e.target.value)}
+                  className="mt-1 w-full bg-transparent text-center text-[15px] font-extrabold text-[#06142f] outline-none"
+                />
+              </div>
+
+              <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
+                <p className="text-[11px] font-bold text-slate-400">الحي</p>
+                <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{district || "—"}</p>
+              </div>
+
+              <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
+                <p className="text-[11px] font-bold text-slate-400">المدينة</p>
+                <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{city || "—"}</p>
+              </div>
+            </div>
+
+            <div className="mt-3 grid grid-cols-3 gap-3">
+              <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
+                <p className="text-[11px] font-bold text-slate-400">الغرف</p>
+                <input
+                  type="number"
+                  value={rooms}
+                  onChange={(e) => setRooms(e.target.value)}
+                  className="mt-1 w-full bg-transparent text-center text-[15px] font-extrabold text-[#06142f] outline-none"
+                />
+              </div>
+
+              <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
+                <p className="text-[11px] font-bold text-slate-400">الحمامات</p>
+                <input
+                  type="number"
+                  value={bathrooms}
+                  onChange={(e) => setBathrooms(e.target.value)}
+                  className="mt-1 w-full bg-transparent text-center text-[15px] font-extrabold text-[#06142f] outline-none"
+                />
+              </div>
+
+              <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
+                <p className="text-[11px] font-bold text-slate-400">المطابخ</p>
+                <input
+                  type="number"
+                  value={kitchens}
+                  onChange={(e) => setKitchens(e.target.value)}
+                  className="mt-1 w-full bg-transparent text-center text-[15px] font-extrabold text-[#06142f] outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 rounded-[22px] bg-slate-50 p-4">
+              <p className="text-[13px] font-bold text-slate-400">الوصف</p>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="وصف العقار..."
+                className="mt-2 min-h-[120px] w-full bg-transparent text-[16px] leading-8 text-[#06142f] outline-none"
+              />
+            </div>
+
+            <div className="mt-6 rounded-[22px] bg-slate-50 p-4">
+              <p className="text-[13px] font-bold text-slate-400">الموقع والحالة</p>
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <Input value={lat} onChange={setLat} placeholder="Latitude" />
+                <Input value={lng} onChange={setLng} placeholder="Longitude" />
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <Select
+                  value={status}
+                  onChange={(v) => setStatus(v as PropertyStatus)}
+                  options={[
+                    { value: "available", label: "متاح" },
+                    { value: "negotiation", label: "تفاوض" },
+                    { value: "reserved", label: "محجوز" },
+                    { value: "sold", label: "مباع" },
+                  ]}
+                />
+                <Input value={video} onChange={setVideo} placeholder="رابط الفيديو" />
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <label className="flex items-center justify-end gap-3 rounded-[16px] bg-white px-4 py-3">
+                  <span className="text-[13px] font-bold text-[#06142f]">عقار مميز</span>
+                  <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} />
+                </label>
+
+                <label className="flex items-center justify-end gap-3 rounded-[16px] bg-white px-4 py-3">
+                  <span className="text-[13px] font-bold text-[#06142f]">إخفاء العقار</span>
+                  <input type="checkbox" checked={hidden} onChange={(e) => setHidden(e.target.checked)} />
+                </label>
+              </div>
+            </div>
+
+            {message ? (
+              <p className="mt-4 text-right text-[12px] font-bold text-[#2563eb]">{message}</p>
             ) : null}
 
-            <button
-              type="submit"
-              className="rounded-[16px] bg-[#06142f] px-5 py-3 text-[14px] font-bold text-white"
-            >
-              {editingProperty ? "حفظ التعديل" : "حفظ العقار"}
-            </button>
-          </div>
-        </form>
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              {editingProperty ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetForm()
+                    onCancelEdit()
+                  }}
+                  className="rounded-full bg-slate-200 px-4 py-3 text-[15px] font-bold text-[#06142f]"
+                >
+                  إلغاء التعديل
+                </button>
+              ) : (
+                <div />
+              )}
 
-        <div className="space-y-4">
-          <InfoBox
-            title="شنو كتدير هاد الصفحة"
-            items={[
-              "تعمر نفس معلومات صفحة العقار للزائر",
-              "العقار يتحفظ مباشرة فالأدمن",
-              "يمكن من بعد ربطه بالواجهة العامة",
-              "تعديل العقار خدام من نفس الصفحة",
-            ]}
-          />
-
-          <InfoBox
-            title="ملاحظات"
-            items={[
-              "الصورة الرئيسية ضرورية قبل الحفظ",
-              "gallery كتقبل عدد كبير ولكن اللي يفشل ما يعطلش الكل",
-              "الفيديو حالياً يبقى رابط",
-              "من بعد نربطو كلشي مع Supabase",
-            ]}
-          />
-
-          <div className="rounded-[20px] bg-white p-4 text-right shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
-            <h3 className="text-[18px] font-black text-[#06142f]">معاينة سريعة</h3>
-            <div className="mt-3 rounded-[18px] border border-slate-200 bg-slate-50 p-4">
-              <p className="text-[16px] font-black text-[#06142f]">{title || "عنوان العقار"}</p>
-              <p className="mt-1 text-[12px] font-bold text-slate-500">
-                {city || "المدينة"} • {district || "الحي"}
-              </p>
-              <p className="mt-3 text-[18px] font-black text-[#2563eb]">{formatDh(finalPrice)}</p>
-              <p className="mt-1 text-[12px] font-bold text-slate-500">
-                الثمن الأصلي: {formatDh(Number(priceDh || 0))}
-              </p>
-
-              <div className="mt-3 grid grid-cols-3 gap-2">
-                <div className="rounded-[12px] bg-white px-3 py-2 text-center text-[12px] font-bold text-[#06142f]">
-                  {area || 0}m²
-                </div>
-                <div className="rounded-[12px] bg-white px-3 py-2 text-center text-[12px] font-bold text-[#06142f]">
-                  {rooms || 0} غرف
-                </div>
-                <div className="rounded-[12px] bg-white px-3 py-2 text-center text-[12px] font-bold text-[#06142f]">
-                  {bathrooms || 0} حمام
-                </div>
-              </div>
-
-              {image ? (
-                <img src={image} alt="preview-main" className="mt-4 h-[180px] w-full rounded-[14px] object-cover" />
-              ) : null}
-
-              {gallery.length > 0 ? (
-                <div className="mt-3 grid grid-cols-3 gap-2">
-                  {gallery.map((img, i) => (
-                    <img key={i} src={img} alt={`preview-${i}`} className="h-[70px] w-full rounded-[10px] object-cover" />
-                  ))}
-                </div>
-              ) : null}
+              <button
+                type="submit"
+                className="rounded-full bg-[#06142f] px-4 py-3 text-[15px] font-bold text-white"
+              >
+                {editingProperty ? "حفظ التعديل" : "حفظ العقار"}
+              </button>
             </div>
-          </div>
-        </div>
-      </div>
+          </form>
+        </article>
+      </main>
     </div>
   )
 }
