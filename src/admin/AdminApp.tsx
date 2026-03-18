@@ -27,6 +27,9 @@ type AdminProperty = {
   kitchens: number
   description: string
   amenities: string[]
+  equippedKitchen: boolean
+  nearMosque: boolean
+  nearSchool: boolean
   image: string
   gallery: string[]
   video: string
@@ -494,6 +497,9 @@ function AddPropertyPage({
   const [kitchens, setKitchens] = useState("1")
   const [description, setDescription] = useState("")
   const [amenitiesText, setAmenitiesText] = useState("")
+  const [equippedKitchen, setEquippedKitchen] = useState(false)
+  const [nearMosque, setNearMosque] = useState(false)
+  const [nearSchool, setNearSchool] = useState(false)
   const [image, setImage] = useState("")
   const [gallery, setGallery] = useState<string[]>([])
   const [video, setVideo] = useState("")
@@ -524,6 +530,9 @@ function AddPropertyPage({
     setKitchens(String(editingProperty.kitchens))
     setDescription(editingProperty.description)
     setAmenitiesText((editingProperty.amenities || []).join("\n"))
+    setEquippedKitchen(!!editingProperty.equippedKitchen)
+    setNearMosque(!!editingProperty.nearMosque)
+    setNearSchool(!!editingProperty.nearSchool)
     setImage(editingProperty.image)
     setGallery(editingProperty.gallery || [])
     setVideo(editingProperty.video)
@@ -548,6 +557,9 @@ function AddPropertyPage({
     setKitchens("1")
     setDescription("")
     setAmenitiesText("")
+    setEquippedKitchen(false)
+    setNearMosque(false)
+    setNearSchool(false)
     setImage("")
     setGallery([])
     setVideo("")
@@ -664,13 +676,16 @@ function AddPropertyPage({
         rooms: Number(rooms),
         bathrooms: Number(bathrooms),
         kitchens: Number(kitchens),
-        description: description.trim(),
-        amenities: amenitiesText
-          .split("\n")
-          .map((item) => item.trim())
-          .filter(Boolean),
-        image: image.trim(),
-        gallery: gallery.length > 0 ? gallery : [image.trim()],
+description: description.trim(),
+amenities: amenitiesText
+  .split(/[\n,]/)
+  .map((item) => item.trim())
+  .filter(Boolean),
+equippedKitchen: equippedKitchen,
+nearMosque: nearMosque,
+nearSchool: nearSchool,
+image: image.trim(),
+gallery: gallery.length > 0 ? gallery : [image.trim()],
         video: video.trim(),
         lat: lat.trim(),
         lng: lng.trim(),
@@ -862,6 +877,40 @@ function AddPropertyPage({
                 className="mt-2 min-h-[120px] w-full bg-transparent text-[16px] leading-8 text-[#06142f] outline-none"
               />
             </div>
+<div className="mt-4 rounded-[18px] bg-white p-4 ring-1 ring-slate-200">
+  <p className="mb-3 text-[13px] font-bold text-slate-500">مميزات العقار</p>
+
+  <div className="grid grid-cols-2 gap-3">
+
+    <label className="flex items-center justify-end gap-3 rounded-[16px] bg-slate-50 px-4 py-3">
+      <span className="text-[13px] font-bold text-[#06142f]">مطبخ مجهز</span>
+      <input
+        type="checkbox"
+        checked={equippedKitchen}
+        onChange={(e) => setEquippedKitchen(e.target.checked)}
+      />
+    </label>
+
+    <label className="flex items-center justify-end gap-3 rounded-[16px] bg-slate-50 px-4 py-3">
+      <span className="text-[13px] font-bold text-[#06142f]">قرب المسجد</span>
+      <input
+        type="checkbox"
+        checked={nearMosque}
+        onChange={(e) => setNearMosque(e.target.checked)}
+      />
+    </label>
+
+    <label className="flex items-center justify-end gap-3 rounded-[16px] bg-slate-50 px-4 py-3">
+      <span className="text-[13px] font-bold text-[#06142f]">قرب المدرسة</span>
+      <input
+        type="checkbox"
+        checked={nearSchool}
+        onChange={(e) => setNearSchool(e.target.checked)}
+      />
+    </label>
+
+  </div>
+</div>
 
             <div className="mt-6 rounded-[22px] bg-slate-50 p-4">
               <p className="text-[13px] font-bold text-slate-400">الموقع والحالة</p>

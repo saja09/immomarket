@@ -14,6 +14,7 @@ import {
 import SearchBar from "./components/SearchBar"
 import Login from "./pages/Login"
 import Profile from "./pages/Profile"
+import adminPropertiesData from "../public/data/admin-properties.json"
 
 type Property = {
   id: number
@@ -29,6 +30,10 @@ type Property = {
   gallery: string[]
   description: string
   amenities?: string[]
+  equippedKitchen?: boolean
+  nearMosque?: boolean
+  nearSchool?: boolean
+  supportDh?: number | null
 }
 
 type SavedUser = {
@@ -74,6 +79,11 @@ const seedProperties: Property[] = [
       "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
     ],
     description: "شقة مناسبة للسكن الأول، قريبة من الخدمات اليومية وفي موقع هادئ.",
+    amenities: ["حي هادئ", "قرب الخدمات اليومية"],
+    equippedKitchen: true,
+    nearMosque: true,
+    nearSchool: true,
+    supportDh: 100000,
   },
   {
     id: 2,
@@ -94,133 +104,33 @@ const seedProperties: Property[] = [
       "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
     ],
     description: "شقة مريحة للعائلة، بتوزيع زوين وقريبة للطريق الوطنية.",
-  },
-  {
-    id: 3,
-    title: "شقة حديثة للبيع",
-    city: "سيدي علال البحراوي",
-    district: "حي الفتح",
-    area: 84,
-    rooms: 3,
-    bathrooms: 2,
-    kitchens: 1,
-    price: "610,000 DH",
-    image:
-      "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80",
-    gallery: [
-      "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
-    ],
-    description: "شقة حديثة بتصميم عملي وموقع مناسب للتنقل.",
-  },
-  {
-    id: 4,
-    title: "استوديو صغير للاستثمار",
-    city: "سيدي علال البحراوي",
-    district: "وسط المدينة",
-    area: 46,
-    rooms: 1,
-    bathrooms: 1,
-    kitchens: 1,
-    price: "320,000 DH",
-    image:
-      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
-    gallery: [
-      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
-    ],
-    description: "استوديو مناسب للاستثمار أو السكن الفردي.",
-  },
-  {
-    id: 5,
-    title: "فيلا واسعة بواجهة مفتوحة",
-    city: "سيدي علال البحراوي",
-    district: "حي السعادة",
-    area: 240,
-    rooms: 5,
-    bathrooms: 3,
-    kitchens: 2,
-    price: "1,450,000 DH",
-    image:
-      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=80",
-    gallery: [
-      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1600566752355-35792bedcfea?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?auto=format&fit=crop&w=1200&q=80",
-    ],
-    description: "فيلا مناسبة لعائلة كبيرة في جو هادئ.",
-  },
-  {
-    id: 6,
-    title: "منزل مستقل قرب السوق الأسبوعي",
-    city: "سيدي علال البحراوي",
-    district: "قرب السوق الأسبوعي",
-    area: 132,
-    rooms: 4,
-    bathrooms: 2,
-    kitchens: 1,
-    price: "890,000 DH",
-    image:
-      "https://images.unsplash.com/photo-1572120360610-d971b9d7767c?auto=format&fit=crop&w=1200&q=80",
-    gallery: [
-      "https://images.unsplash.com/photo-1572120360610-d971b9d7767c?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1600566752355-35792bedcfea?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80",
-    ],
-    description: "منزل مستقل في موقع مطلوب وقريب للخدمات.",
+    amenities: ["قرب الطريق الوطنية", "تشطيب جيد"],
+    equippedKitchen: true,
+    nearMosque: true,
+    nearSchool: false,
+    supportDh: 70000,
   },
 ]
 
-const properties: Property[] = (() => {
-  try {
-    const raw = localStorage.getItem("immomarket_admin_properties")
-    if (!raw) return seedProperties
+function formatDh(value: number) {
+  return `${new Intl.NumberFormat("fr-FR").format(value)} DH`
+}
 
-    const parsed = JSON.parse(raw)
-    if (!Array.isArray(parsed) || parsed.length === 0) return seedProperties
+function priceStringToDh(price: string) {
+  const digits = price.replace(/[^\d]/g, "")
+  return Number(digits || 0)
+}
 
-    const visible = parsed.filter((item) => item && !item.hidden && item.status !== "sold")
-    if (visible.length === 0) return seedProperties
+function getHousingSupportDh(supportDh: number | null | undefined) {
+  if (supportDh === null || supportDh === undefined) return null
+  const value = Number(supportDh)
+  if (isNaN(value)) return null
+  return value
+}
 
-    return visible.map((item: any, index: number) => {
-      const fallback = seedProperties[index % seedProperties.length]
-      const priceDh = Number(item.priceDh || 0)
-      const supportDh = Number(item.supportDh || 0)
-      const gallery = Array.isArray(item.gallery) ? item.gallery.filter(Boolean) : []
-      const image = item.image || gallery[0] || fallback.image
-
-      return {
-        ...fallback,
-        id: item.id ?? fallback.id ?? Date.now() + index,
-        title: item.title || fallback.title,
-        city: item.city || fallback.city,
-        district: item.district || fallback.district,
-        area: Number(item.area || fallback.area || 0),
-        priceDh,
-        supportDh,
-        price: `DH ${new Intl.NumberFormat("fr-FR").format(priceDh)}`,
-        rooms: Number(item.rooms || fallback.rooms || 0),
-        bathrooms: Number(item.bathrooms || fallback.bathrooms || 0),
-        kitchens: Number(item.kitchens || fallback.kitchens || 0),
-        description: item.description || fallback.description,
-        amenities: Array.isArray(item.amenities) ? item.amenities : [],
-        image,
-        gallery: gallery.length ? gallery : (fallback.gallery || [image]),
-        video: item.video || fallback.video || "",
-        lat: item.lat || fallback.lat || "",
-        lng: item.lng || fallback.lng || "",
-      }
-    })
-  } catch {
-    return seedProperties
-  }
-})()
+function getNetPriceDh(priceDh: number, supportDh: number | null | undefined) {
+  return Math.max(0, priceDh - Number(getHousingSupportDh(supportDh) || 0))
+}
 
 function normalizeArabic(text: string) {
   return text
@@ -238,193 +148,6 @@ function normalizeArabic(text: string) {
     .replace(/\s+/g, " ")
 }
 
-function formatDh(value: number) {
-  return `${new Intl.NumberFormat("fr-FR").format(value)} DH`
-}
-
-function priceStringToDh(price: string) {
-  const digits = price.replace(/[^\d]/g, "")
-  return Number(digits || 0)
-}
-
-function millionCentimesToDh(value: number) {
-  return value * 10000
-}
-
-function getHousingSupportDh(supportDh: number | null | undefined) {
-  if (supportDh === null || supportDh === undefined) return null;
-  const value = Number(supportDh);
-  if (isNaN(value)) return null;
-  return value;
-}
-
-function getNetPriceDh(priceDh: number, supportDh: number | null | undefined) {
-  return Math.max(0, priceDh - Number(getHousingSupportDh(supportDh) || 0))
-}
-
-const cityAliases: Record<string, string[]> = {
-  "سيدي علال البحراوي": [
-    "سيدي علال البحراوي",
-    "سيدي علال",
-    "البحراوي",
-    "sidi allal bahraoui",
-    "sidi allal el bahraoui",
-  ],
-}
-
-const districtAliases: Record<string, string[]> = {
-  "حي الأمل": ["حي الأمل", "حي الامل", "الامل"],
-  "حي النهضة": ["حي النهضة", "النهضة"],
-  "حي الفتح": ["حي الفتح", "الفتح"],
-  "حي السعادة": ["حي السعادة", "السعادة"],
-  "وسط المدينة": ["وسط المدينة", "المدينة", "الوسط"],
-  "قرب السوق الأسبوعي": ["قرب السوق الأسبوعي", "السوق الأسبوعي", "قرب السوق"],
-}
-
-const propertyTypeAliases: Record<"شقة" | "فيلا" | "منزل" | "استوديو", string[]> = {
-  شقة: ["شقة", "شقه", "شقق", "appartement", "apartment"],
-  فيلا: ["فيلا", "villa"],
-  منزل: ["منزل", "دار", "بيت", "house", "maison"],
-  استوديو: ["استوديو", "ستوديو", "studio"],
-}
-
-const cheapWords = ["ارخص", "رخيص", "الهوتة", "اقتصادي", "ثمن مناسب"]
-const luxuryWords = ["افخم", "فاخر", "ارقى", "راقي", "فخم"]
-const bestWords = ["احسن", "افضل", "مزيان", "زوين"]
-
-const stopWords = [
-  "في",
-  "ف",
-  "فال",
-  "من",
-  "الى",
-  "بين",
-  "ما",
-  "مابين",
-  "المدينة",
-  "الحي",
-  "الثمن",
-  "السعر",
-  "مليون",
-  "ملايين",
-  "درهم",
-  "dh",
-  "حتى",
-  "فوق",
-  "حي",
-  "دعم",
-  "بلا",
-]
-
-function includesAny(normalizedQuery: string, words: string[]) {
-  return words.some((word) => normalizedQuery.includes(normalizeArabic(word)))
-}
-
-function extractCanonicalValue(
-  normalizedQuery: string,
-  aliasesMap: Record<string, string[]>
-) {
-  for (const [canonical, aliases] of Object.entries(aliasesMap)) {
-    for (const alias of aliases) {
-      if (normalizedQuery.includes(normalizeArabic(alias))) {
-        return canonical
-      }
-    }
-  }
-  return null
-}
-
-function parseSmartQuery(query: string): ParsedSearch {
-  const normalized = normalizeArabic(query)
-  const explanation: string[] = []
-
-  let propertyType: "شقة" | "فيلا" | "منزل" | "استوديو" | null = null
-  const detectedPropertyType = extractCanonicalValue(normalized, propertyTypeAliases)
-
-  if (
-    detectedPropertyType === "شقة" ||
-    detectedPropertyType === "فيلا" ||
-    detectedPropertyType === "منزل" ||
-    detectedPropertyType === "استوديو"
-  ) {
-    propertyType = detectedPropertyType
-    explanation.push(`نوع العقار: ${propertyType}`)
-  }
-
-  const city = extractCanonicalValue(normalized, cityAliases)
-  if (city) explanation.push(`المدينة: ${city}`)
-
-  const district = extractCanonicalValue(normalized, districtAliases)
-  if (district) explanation.push(`الحي: ${district}`)
-
-  let sortMode: SortMode = null
-  if (includesAny(normalized, cheapWords)) {
-    sortMode = "cheap"
-    explanation.push("الترتيب: الأرخص أولاً")
-  } else if (includesAny(normalized, luxuryWords)) {
-    sortMode = "luxury"
-    explanation.push("الترتيب: الأفخم أولاً")
-  } else if (includesAny(normalized, bestWords)) {
-    sortMode = "best"
-    explanation.push("الترتيب: الأحسن أولاً")
-  }
-
-  let minPriceDh: number | null = null
-  let maxPriceDh: number | null = null
-  let supportDh: number | null = null
-
-  const betweenMillionMatch =
-    normalized.match(/(?:ما ?بين|بين)\s*(\d+)\s*(?:و|الى|الي|حتى|-)\s*(\d+)\s*(?:مليون|ملايين)?/) ||
-    normalized.match(/(\d+)\s*(?:و|الى|الي|حتى|-)\s*(\d+)\s*(?:مليون|ملايين)/)
-
-  if (betweenMillionMatch) {
-    const first = Number(betweenMillionMatch[1])
-    const second = Number(betweenMillionMatch[2])
-    minPriceDh = millionCentimesToDh(Math.min(first, second))
-    maxPriceDh = millionCentimesToDh(Math.max(first, second))
-    explanation.push(`الثمن: بين ${formatDh(minPriceDh)} و ${formatDh(maxPriceDh)}`)
-  } else {
-    const lessThanMillionMatch =
-      normalized.match(/(?:اقل من|تحت|دون|حتى)\s*(\d+)\s*(?:مليون|ملايين)?/)
-    const moreThanMillionMatch =
-      normalized.match(/(?:اكثر من|فوق)\s*(\d+)\s*(?:مليون|ملايين)?/)
-
-    if (lessThanMillionMatch) {
-      maxPriceDh = millionCentimesToDh(Number(lessThanMillionMatch[1]))
-      explanation.push(`الثمن الأقصى: ${formatDh(maxPriceDh)}`)
-    } else if (moreThanMillionMatch) {
-      minPriceDh = millionCentimesToDh(Number(moreThanMillionMatch[1]))
-      explanation.push(`الثمن الأدنى: ${formatDh(minPriceDh)}`)
-    }
-  }
-
-  if (normalized.includes("دعم 10 مليون") || normalized.includes("دعم 100000")) {
-    supportDh = 100000
-    explanation.push("الدعم: 10 مليون")
-  } else if (normalized.includes("دعم 7 مليون") || normalized.includes("دعم 70000")) {
-    supportDh = 70000
-    explanation.push("الدعم: 7 مليون")
-  } else if (normalized.includes("بلا دعم")) {
-    supportDh = 0
-    explanation.push("الدعم: بلا دعم")
-  }
-
-  return {
-    raw: query,
-    normalized,
-    propertyType,
-    city,
-    district,
-    minPriceDh,
-    maxPriceDh,
-    minArea: null,
-    maxArea: null,
-    sortMode,
-    supportDh,
-    explanation,
-  }
-}
-
 function detectPropertyType(property: Property): "شقة" | "فيلا" | "منزل" | "استوديو" {
   const n = normalizeArabic(property.title + " " + property.description)
   if (n.includes("فيلا") || n.includes("villa")) return "فيلا"
@@ -433,81 +156,83 @@ function detectPropertyType(property: Property): "شقة" | "فيلا" | "منز
   return "شقة"
 }
 
-function filterPropertiesList(list: Property[], parsedSearch: ParsedSearch, rawQuery: string) {
+function getPropertyFeatures(property: Property) {
+  const items: string[] = []
+  if (property.equippedKitchen) items.push("مطبخ مجهز")
+  if (property.nearMosque) items.push("قرب المسجد")
+  if (property.nearSchool) items.push("قرب المدرسة")
+  if (property.amenities?.length) {
+    property.amenities.forEach((item) => {
+      if (item?.trim()) items.push(item.trim())
+    })
+  }
+  return Array.from(new Set(items))
+}
+
+const importedAdminProperties = Array.isArray(adminPropertiesData) ? adminPropertiesData : []
+
+const properties: Property[] =
+  importedAdminProperties.length > 0
+    ? importedAdminProperties
+        .filter((item: any) => item && !item.hidden && item.status !== "sold")
+        .map((item: any, index: number) => {
+          const fallback = seedProperties[index % seedProperties.length] || seedProperties[0]
+          const gallery = Array.isArray(item.gallery) ? item.gallery.filter(Boolean) : []
+          const image = item.image || gallery[0] || fallback.image
+          const priceDh = Number(item.priceDh || item.price?.replace?.(/[^\d]/g, "") || 0)
+          return {
+            id: item.id ?? Date.now() + index,
+            title: item.title || fallback.title,
+            city: item.city || fallback.city,
+            district: item.district || fallback.district,
+            area: Number(item.area || fallback.area || 0),
+            rooms: Number(item.rooms || fallback.rooms || 0),
+            bathrooms: Number(item.bathrooms || fallback.bathrooms || 0),
+            kitchens: Number(item.kitchens || fallback.kitchens || 0),
+            price: `DH ${new Intl.NumberFormat("fr-FR").format(priceDh)}`,
+            image,
+            gallery: gallery.length ? gallery : [image],
+            description: item.description || fallback.description,
+            amenities: Array.isArray(item.amenities) ? item.amenities : [],
+            equippedKitchen: Boolean(item.equippedKitchen),
+            nearMosque: Boolean(item.nearMosque),
+            nearSchool: Boolean(item.nearSchool),
+            supportDh: Number(item.supportDh || 0),
+          }
+        })
+    : seedProperties
+
+function parseSmartQuery(query: string): ParsedSearch {
+  return {
+    raw: query,
+    normalized: normalizeArabic(query),
+    propertyType: null,
+    city: null,
+    district: null,
+    minPriceDh: null,
+    maxPriceDh: null,
+    minArea: null,
+    maxArea: null,
+    sortMode: null,
+    supportDh: null,
+    explanation: [],
+  }
+}
+
+function filterPropertiesList(list: Property[], _parsedSearch: ParsedSearch, rawQuery: string) {
   if (!rawQuery.trim()) return list
-
-  const filtered = list.filter((property) => {
-    const propertyPriceDh = priceStringToDh(property.price)
-    const propertySupportDh = property.supportDh
-    const normalizedTitle = normalizeArabic(property.title)
-    const normalizedCity = normalizeArabic(property.city)
-    const normalizedDistrict = normalizeArabic(property.district)
-    const normalizedDescription = normalizeArabic(property.description)
-
-    const searchableText = normalizeArabic(
+  const q = normalizeArabic(rawQuery)
+  return list.filter((property) =>
+    normalizeArabic(
       [
         property.title,
         property.city,
         property.district,
         property.description,
-        property.price,
+        ...(property.amenities || []),
       ].join(" ")
-    )
-
-    if (parsedSearch.propertyType) {
-      const aliases = propertyTypeAliases[parsedSearch.propertyType].map(normalizeArabic)
-      const matchType = aliases.some(
-        (alias) =>
-          normalizedTitle.includes(alias) || normalizedDescription.includes(alias)
-      )
-      if (!matchType) return false
-    }
-
-    if (parsedSearch.city) {
-      if (!normalizedCity.includes(normalizeArabic(parsedSearch.city))) return false
-    }
-
-    if (parsedSearch.district) {
-      if (!normalizedDistrict.includes(normalizeArabic(parsedSearch.district))) return false
-    }
-
-    if (parsedSearch.minPriceDh !== null && propertyPriceDh < parsedSearch.minPriceDh) {
-      return false
-    }
-
-    if (parsedSearch.maxPriceDh !== null && propertyPriceDh > parsedSearch.maxPriceDh) {
-      return false
-    }
-
-    if (parsedSearch.supportDh !== null && propertySupportDh !== parsedSearch.supportDh) {
-      return false
-    }
-
-    const tokens = parsedSearch.normalized
-      .split(" ")
-      .filter(Boolean)
-      .filter((token) => !stopWords.includes(token) && !/^\d+$/.test(token))
-
-    if (tokens.length > 0) {
-      return tokens.every((token) => searchableText.includes(token))
-    }
-
-    return true
-  })
-
-  if (parsedSearch.sortMode === "cheap") {
-    return [...filtered].sort((a, b) => priceStringToDh(a.price) - priceStringToDh(b.price))
-  }
-
-  if (parsedSearch.sortMode === "luxury") {
-    return [...filtered].sort((a, b) => priceStringToDh(b.price) - priceStringToDh(a.price))
-  }
-
-  if (parsedSearch.sortMode === "best") {
-    return [...filtered].sort((a, b) => b.area - a.area)
-  }
-
-  return filtered
+    ).includes(q)
+  )
 }
 
 function Header({
@@ -547,9 +272,7 @@ function Header({
         )}
 
         <div className="flex items-center gap-3">
-          <h1 className="text-[30px] font-black tracking-tight text-[#06142f]">
-            ImmoMarket
-          </h1>
+          <h1 className="text-[30px] font-black tracking-tight text-[#06142f]">ImmoMarket</h1>
           <div className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-gradient-to-br from-[#06142f] to-[#0a2b63] shadow">
             <span className="text-[18px] font-black text-white">IM</span>
           </div>
@@ -561,47 +284,32 @@ function Header({
 
 function PropertyCard({
   property,
+  index,
   onOpen,
 }: {
   property: Property
+  index: number
   onOpen: (property: Property) => void
 }) {
-  const priceDh = priceStringToDh(property.price)
   const supportDh = getHousingSupportDh(property.supportDh)
-  const netPriceDh = getNetPriceDh(priceDh, property.supportDh)
 
   return (
     <article className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
       <button type="button" onClick={() => onOpen(property)} className="block w-full text-right">
-        <img
-          src={property.image}
-          alt={property.title}
-          className="h-[230px] w-full object-cover transition active:scale-[0.99]"
-        />
+        <div className="relative">
+          <img
+            src={property.image}
+            alt={property.title}
+            className="h-[230px] w-full object-cover transition active:scale-[0.99]"
+          />
+          <div className="absolute left-3 top-3 rounded-full bg-black/70 px-3 py-1.5 text-[12px] font-black text-white backdrop-blur">
+            العقار رقم {index + 1}
+          </div>
+        </div>
       </button>
 
       <div className="p-5 text-right">
-        <h3 className="text-[21px] font-extrabold leading-snug text-[#06142f]">
-          {property.title}
-        </h3>
-
-        <div className="mt-3 flex flex-wrap justify-end gap-2">
-          {supportDh === 100000 && (
-            <span className="hidden rounded-full bg-green-50 px-3 py-1.5 text-[12px] font-black text-green-700 ring-1 ring-green-200">
-              دعم 10 مليون
-            </span>
-          )}
-          {supportDh === 70000 && (
-            <span className="hidden rounded-full bg-emerald-50 px-3 py-1.5 text-[12px] font-black text-emerald-700 ring-1 ring-emerald-200">
-              دعم 7 مليون
-            </span>
-          )}
-          {supportDh === 0 && (
-            <span className="hidden rounded-full bg-slate-50 px-3 py-1.5 text-[12px] font-black text-slate-600 ring-1 ring-slate-200">
-              بلا دعم
-            </span>
-          )}
-        </div>
+        <h3 className="text-[21px] font-extrabold leading-snug text-[#06142f]">{property.title}</h3>
 
         <div className="mt-4 grid grid-cols-3 gap-3">
           <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
@@ -623,34 +331,15 @@ function PropertyCard({
           </div>
         </div>
 
+        <div className="mt-5 rounded-[20px] bg-[#f8fafc] p-4 text-center ring-1 ring-slate-200">
+          <p className="text-[11px] font-bold text-slate-400">الثمن الأصلي</p>
+          <p className="mt-2 text-[34px] font-black tracking-tight text-[#2563eb]">{property.price}</p>
 
-        <div className="mt-5 rounded-[20px] bg-[#f8fafc] p-4 ring-1 ring-slate-200 text-center">
-          <div className="flex flex-col items-center justify-center text-center gap-2">
-            <div className="text-center">
-              <p className="text-[11px] font-bold text-slate-400">الثمن الأصلي</p>
-              <p className="mt-2 text-[34px] font-black text-[#2563eb] tracking-tight text-center">
-  {property.price}
-</p>
-            </div>
-
-  
-          </div>
-
-          {supportDh > 0 && (
+          {supportDh !== null && supportDh > 0 && (
             <p className="mt-2 text-[13px] font-black text-green-700">
               قيمة الدعم: {formatDh(supportDh)}
             </p>
           )}
-        </div>
-
-        <div className="mt-5 flex items-end justify-between gap-3">
-          <button
-            type="button"
-            onClick={() => onOpen(property)}
-            className="hidden rounded-full bg-[#06142f] px-5 py-3 text-[15px] font-bold text-white shadow-[0_10px_24px_rgba(6,20,47,0.14)]"
-          >
-            التفاصيل
-          </button>
         </div>
       </div>
     </article>
@@ -659,19 +348,24 @@ function PropertyCard({
 
 function PropertyDetails({
   property,
+  propertyNumber,
   onBack,
 }: {
   property: Property
+  propertyNumber: number
   onBack: () => void
 }) {
   const priceDh = priceStringToDh(property.price)
   const supportDh = getHousingSupportDh(property.supportDh)
   const netPriceDh = getNetPriceDh(priceDh, property.supportDh)
+  const featureItems = getPropertyFeatures(property)
+
+  const whatsappMessage = encodeURIComponent(
+    `السلام عليكم، أنا مهتم بالعقار رقم ${propertyNumber} - ${property.title}`
+  )
 
   const gallery =
-    property.gallery && property.gallery.length > 0
-      ? property.gallery
-      : [property.image]
+    property.gallery && property.gallery.length > 0 ? property.gallery : [property.image]
 
   const [activeIndex, setActiveIndex] = useState(0)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -694,12 +388,10 @@ function PropertyDetails({
       setActiveIndex(gallery.length - 1)
       return
     }
-
     if (index >= gallery.length) {
       setActiveIndex(0)
       return
     }
-
     setActiveIndex(index)
   }
 
@@ -717,26 +409,21 @@ function PropertyDetails({
 
   const handleTouchEnd = () => {
     if (touchStartX.current === null || touchEndX.current === null) return
-
     const distance = touchStartX.current - touchEndX.current
     const minSwipe = 45
-
     if (Math.abs(distance) > minSwipe) {
       if (distance > 0) goNext()
       else goPrev()
     }
-
     touchStartX.current = null
     touchEndX.current = null
   }
 
   const handleImageTap = () => {
     const now = Date.now()
-
     if (now - lastTapRef.current < 280) {
       setIsFullscreen((prev) => !prev)
     }
-
     lastTapRef.current = now
   }
 
@@ -798,48 +485,22 @@ function PropertyDetails({
               {activeIndex + 1} / {gallery.length}
             </div>
 
-            <div className="absolute bottom-3 right-3 rounded-full bg-black/45 px-3 py-1 text-[11px] font-bold text-white backdrop-blur">
+            <div className="absolute right-3 top-3 rounded-full bg-black/60 px-3 py-1.5 text-[12px] font-black text-white backdrop-blur">
+              العقار رقم {propertyNumber}
             </div>
           </div>
 
           <div className="px-4 pb-1 pt-4">
-            <div className="mb-4 grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowVR(false)
-                  setShowAR(true)
-                }}
-                className="hidden rounded-full bg-[#2563eb] px-4 py-3 text-[14px] font-bold text-white shadow"
-              >
-                Voir en AR
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setShowAR(false)
-                  setShowVR(true)
-                }}
-                className="hidden rounded-full bg-[#06142f] px-4 py-3 text-[14px] font-bold text-white shadow"
-              >
-                Visite VR
-              </button>
-            </div>
-
             <div className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {gallery.map((img, index) => {
                 const isActive = activeIndex === index
-
                 return (
                   <button
                     key={index}
                     type="button"
                     onClick={() => setActiveIndex(index)}
                     className={`shrink-0 overflow-hidden rounded-[18px] ring-2 transition-all duration-300 ${
-                      isActive
-                        ? "scale-[1.02] ring-[#06142f]"
-                        : "opacity-80 ring-transparent"
+                      isActive ? "scale-[1.02] ring-[#06142f]" : "opacity-80 ring-transparent"
                     }`}
                   >
                     <img
@@ -854,39 +515,21 @@ function PropertyDetails({
           </div>
 
           <div className="p-5 pt-3 text-right">
-            <h2 className="text-[28px] font-black leading-tight text-[#06142f]">
-              {property.title}
-            </h2>
+            <h2 className="text-[28px] font-black leading-tight text-[#06142f]">{property.title}</h2>
 
-            <div className="mt-3 flex flex-wrap justify-end gap-2">
-              {supportDh === 100000 && (
-                <span className="hidden rounded-full bg-green-50 px-3 py-1.5 text-[12px] font-black text-green-700 ring-1 ring-green-200">
-                  دعم 10 مليون
-                </span>
-              )}
-              {supportDh === 70000 && (
-                <span className="hidden rounded-full bg-emerald-50 px-3 py-1.5 text-[12px] font-black text-emerald-700 ring-1 ring-emerald-200">
-                  دعم 7 مليون
-                </span>
-              )}
-              {supportDh === 0 && (
-                <span className="hidden rounded-full bg-slate-50 px-3 py-1.5 text-[12px] font-black text-slate-600 ring-1 ring-slate-200">
-                  بلا دعم
-                </span>
-              )}
-            </div>
+            <div className="mt-4 rounded-[20px] bg-[#f8fafc] p-4 text-center ring-1 ring-slate-200">
+              <p className="text-[13px] font-bold text-slate-400">الثمن الأصلي</p>
+              <p className="mt-2 text-[34px] font-black tracking-tight text-[#2563eb]">{property.price}</p>
 
-            
-            <div className="mt-4 rounded-[20px] bg-[#f8fafc] p-4 ring-1 ring-slate-200 text-center text-center">
-              <p className="text-[13px] font-bold text-slate-400">
-                الثمن الأصلي
-              </p>
-              <p className="mt-2 text-[34px] font-black text-[#2563eb] tracking-tight text-center">
-                {property.price}
-              </p>
-              {supportDh > 0 && (
-                <p className="mt-2 text-[15px] font-black text-green-700 text-center">
+              {supportDh !== null && supportDh > 0 && (
+                <p className="mt-2 text-[15px] font-black text-green-700">
                   قيمة الدعم: {formatDh(supportDh)}
+                </p>
+              )}
+
+              {netPriceDh !== priceDh && (
+                <p className="mt-2 text-[14px] font-black text-[#06142f]">
+                  الثمن بعد الدعم: {formatDh(netPriceDh)}
                 </p>
               )}
             </div>
@@ -895,25 +538,19 @@ function PropertyDetails({
               <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
                 <Ruler size={18} className="mx-auto mb-2 text-slate-500" />
                 <p className="text-[11px] font-bold text-slate-400">المساحة</p>
-                <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">
-                  {property.area} m²
-                </p>
+                <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{property.area} m²</p>
               </div>
 
               <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
                 <MapPin size={18} className="mx-auto mb-2 text-slate-500" />
                 <p className="text-[11px] font-bold text-slate-400">الحي</p>
-                <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">
-                  {property.district}
-                </p>
+                <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{property.district}</p>
               </div>
 
               <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
                 <Building2 size={18} className="mx-auto mb-2 text-slate-500" />
                 <p className="text-[11px] font-bold text-slate-400">المدينة</p>
-                <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">
-                  {property.city}
-                </p>
+                <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{property.city}</p>
               </div>
             </div>
 
@@ -921,67 +558,76 @@ function PropertyDetails({
               <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
                 <BedDouble size={18} className="mx-auto mb-2 text-slate-500" />
                 <p className="text-[11px] font-bold text-slate-400">الغرف</p>
-                <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">
-                  {property.rooms}
-                </p>
+                <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{property.rooms}</p>
               </div>
 
               <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
                 <Bath size={18} className="mx-auto mb-2 text-slate-500" />
                 <p className="text-[11px] font-bold text-slate-400">الحمامات</p>
-                <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">
-                  {property.bathrooms}
-                </p>
+                <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{property.bathrooms}</p>
               </div>
 
               <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
                 <ChefHat size={18} className="mx-auto mb-2 text-slate-500" />
                 <p className="text-[11px] font-bold text-slate-400">المطابخ</p>
-                <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">
-                  {property.kitchens}
-                </p>
+                <p className="mt-1 text-[15px] font-extrabold text-[#06142f]">{property.kitchens}</p>
               </div>
             </div>
 
             <div className="mt-6 rounded-[22px] bg-slate-50 p-4">
               <p className="text-[13px] font-bold text-slate-400">الوصف</p>
-              <p className="mt-2 text-[16px] leading-8 text-[#06142f]">
-                {property.description}
-              </p>
+              <p className="mt-2 text-[16px] leading-8 text-[#06142f]">{property.description}</p>
             </div>
 
-            
-<div className="mt-6 rounded-[22px] bg-slate-50 p-4">
-  <p className="text-[13px] font-bold text-slate-400">الموقع</p>
+            {featureItems.length > 0 && (
+              <div className="mt-6 rounded-[24px] border border-[#e4e7ec] bg-white p-5 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
+                <div className="mb-5 text-right">
+                  <h3 className="text-[28px] font-black leading-tight text-[#06142f]">مميزات</h3>
+                </div>
 
-  <div className="mt-3 overflow-hidden rounded-[18px]">
-    <iframe
-      src={`https://maps.google.com/maps?q=${encodeURIComponent(
-        `${property.title} ${property.district} ${property.city} Morocco`
-      )}&z=15&output=embed`}
-      width="100%"
-      height="200"
-      style={{ border: 0 }}
-      loading="lazy"
-    ></iframe>
-  </div>
+                <div className="grid grid-cols-2 gap-x-8 gap-y-5">
+                  {featureItems.map((item) => (
+                    <div key={item} className="flex items-center justify-end gap-3 text-right">
+                      <span className="text-[17px] font-bold text-[#06142f]">{item}</span>
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-emerald-600 text-[15px] font-black text-emerald-600">
+                        ✓
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
-  <a
-    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-      `${property.title} ${property.district} ${property.city} Morocco`
-    )}`}
-    target="_blank"
-    rel="noreferrer"
-    className="mt-3 flex items-center justify-center rounded-full bg-[#2563eb] px-4 py-3 text-[15px] font-bold text-white"
-  >
-    فتح في Google Maps
-  </a>
-</div>
+            <div className="mt-6 rounded-[22px] bg-slate-50 p-4">
+              <p className="text-[13px] font-bold text-slate-400">الموقع</p>
 
+              <div className="mt-3 overflow-hidden rounded-[18px]">
+                <iframe
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(
+                    `${property.title} ${property.district} ${property.city} Morocco`
+                  )}&z=15&output=embed`}
+                  width="100%"
+                  height="200"
+                  style={{ border: 0 }}
+                  loading="lazy"
+                ></iframe>
+              </div>
 
-<div className="mt-6 grid grid-cols-2 gap-3">
               <a
-                href="https://wa.me/212678927276"
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                  `${property.title} ${property.district} ${property.city} Morocco`
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-3 flex items-center justify-center rounded-full bg-[#2563eb] px-4 py-3 text-[15px] font-bold text-white"
+              >
+                فتح في Google Maps
+              </a>
+            </div>
+
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <a
+                href={`https://wa.me/212771455703?text=${whatsappMessage}`}
                 className="flex items-center justify-center gap-2 rounded-full bg-[#22c55e] px-4 py-3 text-[15px] font-bold text-white"
               >
                 <MessageCircle size={18} />
@@ -989,7 +635,7 @@ function PropertyDetails({
               </a>
 
               <a
-                href="tel:+212678927276"
+                href="tel:0771455703"
                 className="flex items-center justify-center gap-2 rounded-full bg-[#06142f] px-4 py-3 text-[15px] font-bold text-white"
               >
                 <Phone size={18} />
@@ -1094,14 +740,12 @@ function PropertyDetails({
             onClick={handleImageTap}
             draggable={false}
           />
-
-          <div className="absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-white/15 px-4 py-2 text-[13px] font-bold text-white backdrop-blur">
-          </div>
         </div>
       )}
     </>
   )
 }
+
 export default function App() {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null)
   const [currentPage, setCurrentPage] = useState<"home" | "login" | "profile">("home")
@@ -1149,6 +793,13 @@ export default function App() {
     setSelectedProperty(null)
   }
 
+  const selectedPropertyNumber = selectedProperty
+    ? Math.max(
+        1,
+        filteredProperties.findIndex((property) => property.id === selectedProperty.id) + 1
+      )
+    : 1
+
   if (currentPage === "login") {
     return <Login onBack={() => setCurrentPage("home")} onAuthSuccess={handleAuthSuccess} />
   }
@@ -1176,7 +827,11 @@ export default function App() {
       />
 
       {selectedProperty ? (
-        <PropertyDetails property={selectedProperty} onBack={() => setSelectedProperty(null)} />
+        <PropertyDetails
+          property={selectedProperty}
+          propertyNumber={selectedPropertyNumber}
+          onBack={() => setSelectedProperty(null)}
+        />
       ) : (
         <>
           <SearchBar
@@ -1195,21 +850,7 @@ export default function App() {
             {appliedQuery && (
               <div className="mb-4 rounded-[20px] bg-white p-4 text-right shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
                 <p className="text-[14px] font-black text-[#06142f]">الفلاتر المطبقة:</p>
-
-                {parsedSearch.explanation.length > 0 ? (
-                  <div className="mt-2 flex flex-wrap justify-end gap-2">
-                    {parsedSearch.explanation.map((item, index) => (
-                      <span
-                        key={index}
-                        className="hidden rounded-full bg-[#f8fafc] px-3 py-1.5 text-[12px] font-bold text-slate-600 ring-1 ring-slate-200"
-                      >
-                        {item}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="mt-2 text-[13px] font-bold text-slate-500">{appliedQuery}</p>
-                )}
+                <p className="mt-2 text-[13px] font-bold text-slate-500">{appliedQuery}</p>
               </div>
             )}
 
@@ -1222,10 +863,11 @@ export default function App() {
               </div>
             ) : (
               <div className="grid gap-6">
-                {filteredProperties.map((property) => (
+                {filteredProperties.map((property, index) => (
                   <PropertyCard
                     key={property.id}
                     property={property}
+                    index={index}
                     onOpen={setSelectedProperty}
                   />
                 ))}
