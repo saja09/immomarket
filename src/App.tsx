@@ -14,7 +14,6 @@ import {
 import SearchBar from "./components/SearchBar"
 import Login from "./pages/Login"
 import Profile from "./pages/Profile"
-import adminPropertiesData from "../public/data/admin-properties.json"
 
 type Property = {
   id: number
@@ -58,6 +57,8 @@ type ParsedSearch = {
   supportDh: number | null
   explanation: string[]
 }
+
+const STORAGE_KEY = "immomarket_admin_properties"
 
 const seedProperties: Property[] = [
   {
@@ -169,38 +170,48 @@ function getPropertyFeatures(property: Property) {
   return Array.from(new Set(items))
 }
 
-const importedAdminProperties = Array.isArray(adminPropertiesData) ? adminPropertiesData : []
+function getVisibleProperties(): Property[] {
+  try {
+    if (typeof window === "undefined") return seedProperties
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return seedProperties
 
-const properties: Property[] =
-  importedAdminProperties.length > 0
-    ? importedAdminProperties
-        .filter((item: any) => item && !item.hidden && item.status !== "sold")
-        .map((item: any, index: number) => {
-          const fallback = seedProperties[index % seedProperties.length] || seedProperties[0]
-          const gallery = Array.isArray(item.gallery) ? item.gallery.filter(Boolean) : []
-          const image = item.image || gallery[0] || fallback.image
-          const priceDh = Number(item.priceDh || item.price?.replace?.(/[^\d]/g, "") || 0)
-          return {
-            id: item.id ?? Date.now() + index,
-            title: item.title || fallback.title,
-            city: item.city || fallback.city,
-            district: item.district || fallback.district,
-            area: Number(item.area || fallback.area || 0),
-            rooms: Number(item.rooms || fallback.rooms || 0),
-            bathrooms: Number(item.bathrooms || fallback.bathrooms || 0),
-            kitchens: Number(item.kitchens || fallback.kitchens || 0),
-            price: `DH ${new Intl.NumberFormat("fr-FR").format(priceDh)}`,
-            image,
-            gallery: gallery.length ? gallery : [image],
-            description: item.description || fallback.description,
-            amenities: Array.isArray(item.amenities) ? item.amenities : [],
-            equippedKitchen: Boolean(item.equippedKitchen),
-            nearMosque: Boolean(item.nearMosque),
-            nearSchool: Boolean(item.nearSchool),
-            supportDh: Number(item.supportDh || 0),
-          }
-        })
-    : seedProperties
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed) || parsed.length === 0) return seedProperties
+
+    const visible = parsed.filter((item: any) => item && !item.hidden && item.status !== "sold")
+    if (visible.length === 0) return seedProperties
+
+    return visible.map((item: any, index: number) => {
+      const fallback = seedProperties[index % seedProperties.length] || seedProperties[0]
+      const gallery = Array.isArray(item.gallery) ? item.gallery.filter(Boolean) : []
+      const image = item.image || gallery[0] || fallback.image
+      const priceDh = Number(item.priceDh || item.price?.replace?.(/[^\d]/g, "") || 0)
+
+      return {
+        id: item.id ?? Date.now() + index,
+        title: item.title || fallback.title,
+        city: item.city || fallback.city,
+        district: item.district || fallback.district,
+        area: Number(item.area || fallback.area || 0),
+        rooms: Number(item.rooms || fallback.rooms || 0),
+        bathrooms: Number(item.bathrooms || fallback.bathrooms || 0),
+        kitchens: Number(item.kitchens || fallback.kitchens || 0),
+        price: `DH ${new Intl.NumberFormat("fr-FR").format(priceDh)}`,
+        image,
+        gallery: gallery.length ? gallery : [image],
+        description: item.description || fallback.description,
+        amenities: Array.isArray(item.amenities) ? item.amenities : [],
+        equippedKitchen: Boolean(item.equippedKitchen),
+        nearMosque: Boolean(item.nearMosque),
+        nearSchool: Boolean(item.nearSchool),
+        supportDh: Number(item.supportDh || 0),
+      }
+    })
+  } catch {
+    return seedProperties
+  }
+}
 
 function parseSmartQuery(query: string): ParsedSearch {
   return {
@@ -222,6 +233,7 @@ function parseSmartQuery(query: string): ParsedSearch {
 function filterPropertiesList(list: Property[], _parsedSearch: ParsedSearch, rawQuery: string) {
   if (!rawQuery.trim()) return list
   const q = normalizeArabic(rawQuery)
+
   return list.filter((property) =>
     normalizeArabic(
       [
@@ -336,9 +348,7 @@ function PropertyCard({
           <p className="mt-2 text-[34px] font-black tracking-tight text-[#2563eb]">{property.price}</p>
 
           {supportDh !== null && supportDh > 0 && (
-            <p className="mt-2 text-[13px] font-black text-green-700">
-              قيمة الدعم: {formatDh(supportDh)}
-            </p>
+            <p className="mt-2 text-[13px] font-black text-green-700">قيمة الدعم: {formatDh(supportDh)}</p>
           )}
         </div>
       </div>
@@ -360,9 +370,23 @@ function PropertyDetails({
   const netPriceDh = getNetPriceDh(priceDh, property.supportDh)
   const featureItems = getPropertyFeatures(property)
 
-  const whatsappMessage = encodeURIComponent(
-    `السلام عليكم، أنا مهتم بالعقار رقم ${propertyNumber} - ${property.title}`
-  )
+  const propertyLink =
+    typeof window !== "undefined" ? window.location.href : "رابط العقار غير متوفر"
+
+  const bookingWhatsappMessage = encodeURIComponent(`السلام عليكم، بغيت نطلب موعد للحجز / الزيارة بخصوص هذا العقار.
+
+رقم العقار: ${propertyNumber}
+رابط العقار: ${propertyLink}
+الاسم:
+اليوم المناسب:
+الوقت المناسب:`)
+
+  const inquiryWhatsappMessage = encodeURIComponent(`السلام عليكم، عندي استفسار بخصوص هذا العقار.
+
+رقم العقار: ${propertyNumber}
+رابط العقار: ${propertyLink}
+الاستفسار:
+الاسم:`)
 
   const gallery =
     property.gallery && property.gallery.length > 0 ? property.gallery : [property.image]
@@ -522,9 +546,7 @@ function PropertyDetails({
               <p className="mt-2 text-[34px] font-black tracking-tight text-[#2563eb]">{property.price}</p>
 
               {supportDh !== null && supportDh > 0 && (
-                <p className="mt-2 text-[15px] font-black text-green-700">
-                  قيمة الدعم: {formatDh(supportDh)}
-                </p>
+                <p className="mt-2 text-[15px] font-black text-green-700">قيمة الدعم: {formatDh(supportDh)}</p>
               )}
 
               {netPriceDh !== priceDh && (
@@ -625,21 +647,59 @@ function PropertyDetails({
               </a>
             </div>
 
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              <a
-                href={`https://wa.me/212771455703?text=${whatsappMessage}`}
-                className="flex items-center justify-center gap-2 rounded-full bg-[#22c55e] px-4 py-3 text-[15px] font-bold text-white"
-              >
-                <MessageCircle size={18} />
-                واتساب
-              </a>
+            <div className="mt-6 rounded-[24px] border border-slate-200 bg-white p-4 shadow-[0_12px_28px_rgba(15,23,42,0.05)]">
+              <div className="mb-4 text-right">
+                <p className="text-[12px] font-black text-slate-400">التواصل</p>
+                <h3 className="mt-1 text-[22px] font-black text-[#06142f]">اختر طريقة التواصل</h3>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <a
+                  href={`https://wa.me/212771455703?text=${bookingWhatsappMessage}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-[22px] bg-[#16a34a] p-4 text-white shadow-[0_14px_30px_rgba(22,163,74,0.22)]"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15">
+                      <MessageCircle size={22} />
+                    </span>
+                    <div className="text-right">
+                      <p className="text-[16px] font-black">طلب موعد</p>
+                      <p className="mt-1 text-[12px] font-bold text-white/85">حجز أو زيارة العقار</p>
+                    </div>
+                  </div>
+                </a>
+
+                <a
+                  href={`https://wa.me/212771455703?text=${inquiryWhatsappMessage}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-[22px] bg-[#22c55e] p-4 text-white shadow-[0_14px_30px_rgba(34,197,94,0.20)]"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15">
+                      <MessageCircle size={22} />
+                    </span>
+                    <div className="text-right">
+                      <p className="text-[16px] font-black">استفسار</p>
+                      <p className="mt-1 text-[12px] font-bold text-white/85">اسأل على التفاصيل</p>
+                    </div>
+                  </div>
+                </a>
+              </div>
 
               <a
                 href="tel:0771455703"
-                className="flex items-center justify-center gap-2 rounded-full bg-[#06142f] px-4 py-3 text-[15px] font-bold text-white"
+                className="mt-3 flex items-center justify-between rounded-[22px] bg-[#06142f] px-5 py-4 text-white shadow-[0_14px_30px_rgba(6,20,47,0.18)]"
               >
-                <Phone size={18} />
-                اتصال
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10">
+                  <Phone size={22} />
+                </span>
+                <div className="text-right">
+                  <p className="text-[17px] font-black">اتصال مباشر</p>
+                  <p className="mt-1 text-[12px] font-bold text-white/75">تواصل هاتفي سريع</p>
+                </div>
               </a>
             </div>
           </div>
@@ -752,6 +812,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<SavedUser | null>(null)
   const [query, setQuery] = useState("")
   const [appliedQuery, setAppliedQuery] = useState("")
+  const [allProperties, setAllProperties] = useState<Property[]>(seedProperties)
 
   useEffect(() => {
     const raw = localStorage.getItem("immomarket_current_user")
@@ -762,6 +823,7 @@ export default function App() {
         localStorage.removeItem("immomarket_current_user")
       }
     }
+    setAllProperties(getVisibleProperties())
   }, [])
 
   const handleAuthSuccess = (user: SavedUser) => {
@@ -773,20 +835,20 @@ export default function App() {
   const parsedSearch = useMemo(() => parseSmartQuery(appliedQuery), [appliedQuery])
 
   const filteredProperties = useMemo(() => {
-    return filterPropertiesList(properties, parsedSearch, appliedQuery)
-  }, [parsedSearch, appliedQuery])
+    return filterPropertiesList(allProperties, parsedSearch, appliedQuery)
+  }, [allProperties, parsedSearch, appliedQuery])
 
   const availableDistricts = useMemo(() => {
-    const onlyCity = properties
+    const onlyCity = allProperties
       .filter((property) => property.city === "سيدي علال البحراوي")
       .map((property) => property.district)
 
     return Array.from(new Set(onlyCity))
-  }, [])
+  }, [allProperties])
 
   const availablePropertyTypes = useMemo(() => {
-    return Array.from(new Set(properties.map((property) => detectPropertyType(property))))
-  }, [])
+    return Array.from(new Set(allProperties.map((property) => detectPropertyType(property))))
+  }, [allProperties])
 
   const handleSearch = () => {
     setAppliedQuery(query.trim())
