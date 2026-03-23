@@ -8,7 +8,7 @@ type SearchBarProps = {
   districts: string[]
   propertyTypes: string[]
   onOpenMap?: () => void
-  currentUser?: any
+  currentUser?: unknown
 }
 
 export default function SearchBar({
@@ -18,11 +18,9 @@ export default function SearchBar({
   districts,
   propertyTypes,
   onOpenMap = () => {},
-  currentUser
+  currentUser,
 }: SearchBarProps) {
-
   const [showFilter, setShowFilter] = useState(false)
-
   const [district, setDistrict] = useState("")
   const [propertyType, setPropertyType] = useState("")
   const [supportType, setSupportType] = useState("")
@@ -71,11 +69,8 @@ export default function SearchBar({
 
   return (
     <section className="mx-auto mt-6 max-w-md px-4">
-
       <div className="rounded-[28px] bg-white px-4 py-4 shadow ring-1 ring-slate-200">
-
         <div className="flex items-center gap-3">
-
           <button
             type="button"
             onClick={onOpenMap}
@@ -85,7 +80,6 @@ export default function SearchBar({
           </button>
 
           <div className="relative flex-1">
-
             <input
               value={value}
               onChange={(e) => onChange(e.target.value)}
@@ -97,7 +91,6 @@ export default function SearchBar({
             />
 
             <div className="absolute left-2 top-1/2 -translate-y-1/2">
-
               <button
                 type="button"
                 onClick={onSearch}
@@ -105,50 +98,37 @@ export default function SearchBar({
               >
                 <Search size={17} />
               </button>
-
             </div>
-
           </div>
-
         </div>
 
         {showFilter && (
-
           <div className="mt-4 rounded-[24px] bg-[#f8fafc] p-4 ring-1 ring-slate-200">
-
             <div className="mb-4 flex items-center justify-between">
-
-              <h3 className="text-[16px] font-black text-[#06142f]">
-                فلتر البحث
-              </h3>
+              <h3 className="text-[16px] font-black text-[#06142f]">فلتر البحث</h3>
 
               <button
+                type="button"
                 onClick={() => setShowFilter(false)}
                 className="rounded-full px-3 py-1 text-[13px] font-bold text-slate-500 ring-1 ring-slate-200"
               >
                 إغلاق
               </button>
-
             </div>
 
             {currentUser && (
-
-              <button className="mb-4 flex w-full items-center justify-center gap-2 rounded-full border border-slate-200 bg-white py-3 font-bold">
-
+              <button
+                type="button"
+                className="mb-4 flex w-full items-center justify-center gap-2 rounded-full border border-slate-200 bg-white py-3 font-bold"
+              >
                 المفضلة
                 <Heart size={18} />
-
               </button>
-
             )}
 
             <div className="grid grid-cols-2 gap-3 text-right">
-
               <div className="col-span-2">
-                <label className="text-[13px] font-bold text-slate-500">
-                  المدينة
-                </label>
-
+                <label className="text-[13px] font-bold text-slate-500">المدينة</label>
                 <input
                   value={city}
                   readOnly
@@ -157,10 +137,7 @@ export default function SearchBar({
               </div>
 
               <div>
-                <label className="text-[13px] font-bold text-slate-500">
-                  الحي
-                </label>
-
+                <label className="text-[13px] font-bold text-slate-500">الحي</label>
                 <select
                   value={district}
                   onChange={(e) => setDistrict(e.target.value)}
@@ -168,16 +145,15 @@ export default function SearchBar({
                 >
                   <option value="">جميع الأحياء</option>
                   {districts.map((item) => (
-                    <option key={item} value={item}>{item}</option>
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="text-[13px] font-bold text-slate-500">
-                  نوع العقار
-                </label>
-
+                <label className="text-[13px] font-bold text-slate-500">نوع العقار</label>
                 <select
                   value={propertyType}
                   onChange={(e) => setPropertyType(e.target.value)}
@@ -185,16 +161,15 @@ export default function SearchBar({
                 >
                   <option value="">جميع الأنواع</option>
                   {propertyTypes.map((item) => (
-                    <option key={item} value={item}>{item}</option>
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="text-[13px] font-bold text-slate-500">
-                  الثمن من
-                </label>
-
+                <label className="text-[13px] font-bold text-slate-500">الثمن من</label>
                 <input
                   type="number"
                   value={minPrice}
@@ -204,10 +179,7 @@ export default function SearchBar({
               </div>
 
               <div>
-                <label className="text-[13px] font-bold text-slate-500">
-                  الثمن إلى
-                </label>
-
+                <label className="text-[13px] font-bold text-slate-500">الثمن إلى</label>
                 <input
                   type="number"
                   value={maxPrice}
@@ -216,9 +188,23 @@ export default function SearchBar({
                 />
               </div>
 
-              <div className="col-span-2 grid grid-cols-2 gap-3">
+              <div className="col-span-2">
+                <label className="text-[13px] font-bold text-slate-500">نوع الدعم</label>
+                <select
+                  value={supportType}
+                  onChange={(e) => setSupportType(e.target.value)}
+                  className="h-12 w-full rounded-2xl bg-white px-4 ring-1 ring-slate-200"
+                >
+                  <option value="">الكل</option>
+                  <option value="100000">دعم 10 مليون</option>
+                  <option value="70000">دعم 7 مليون</option>
+                  <option value="0">بلا دعم</option>
+                </select>
+              </div>
 
+              <div className="col-span-2 grid grid-cols-2 gap-3">
                 <button
+                  type="button"
                   onClick={applyFilter}
                   className="rounded-full bg-[#06142f] py-3 font-bold text-white"
                 >
@@ -226,22 +212,17 @@ export default function SearchBar({
                 </button>
 
                 <button
+                  type="button"
                   onClick={resetFilter}
                   className="rounded-full border border-slate-200 py-3 font-bold"
                 >
                   مسح
                 </button>
-
               </div>
-
             </div>
-
           </div>
-
         )}
-
       </div>
-
     </section>
   )
 }

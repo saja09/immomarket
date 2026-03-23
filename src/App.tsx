@@ -10,6 +10,8 @@ import {
   BedDouble,
   Bath,
   ChefHat,
+  CheckCircle2,
+  ClipboardList,
 } from "lucide-react"
 import SearchBar from "./components/SearchBar"
 import Login from "./pages/Login"
@@ -33,6 +35,11 @@ type Property = {
   nearMosque?: boolean
   nearSchool?: boolean
   supportDh?: number | null
+  sold?: boolean
+  soldAt?: string
+  soldPriceDh?: number | null
+  soldBy?: "me" | "other_agency" | "owner" | "unknown" | null
+  saleNotes?: string
 }
 
 type SavedUser = {
@@ -58,7 +65,23 @@ type ParsedSearch = {
   explanation: string[]
 }
 
+type ClientRequest = {
+  id: number
+  propertyId: number
+  propertyTitle: string
+  propertyDistrict: string
+  propertyCity: string
+  name: string
+  phone: string
+  whatsapp: string
+  preferredDistricts: string[]
+  notes: string
+  createdAt: string
+  source: "sold_property_form"
+}
+
 const STORAGE_KEY = "immomarket_admin_properties"
+const REQUESTS_STORAGE_KEY = "immomarket_property_requests"
 
 const seedProperties: Property[] = [
   {
@@ -179,7 +202,7 @@ function getVisibleProperties(): Property[] {
     const parsed = JSON.parse(raw)
     if (!Array.isArray(parsed) || parsed.length === 0) return seedProperties
 
-    const visible = parsed.filter((item: any) => item && !item.hidden && item.status !== "sold")
+    const visible = parsed.filter((item: any) => item && !item.hidden)
     if (visible.length === 0) return seedProperties
 
     return visible.map((item: any, index: number) => {
@@ -187,6 +210,7 @@ function getVisibleProperties(): Property[] {
       const gallery = Array.isArray(item.gallery) ? item.gallery.filter(Boolean) : []
       const image = item.image || gallery[0] || fallback.image
       const priceDh = Number(item.priceDh || item.price?.replace?.(/[^\d]/g, "") || 0)
+      const sold = item.status === "sold" || Boolean(item.sold)
 
       return {
         id: item.id ?? Date.now() + index,
@@ -205,7 +229,15 @@ function getVisibleProperties(): Property[] {
         equippedKitchen: Boolean(item.equippedKitchen),
         nearMosque: Boolean(item.nearMosque),
         nearSchool: Boolean(item.nearSchool),
-        supportDh: Number(item.supportDh || 0),
+        supportDh: item.supportDh === null || item.supportDh === undefined ? null : Number(item.supportDh || 0),
+        sold,
+        soldAt: item.soldAt || "",
+        soldPriceDh:
+          item.soldPriceDh === null || item.soldPriceDh === undefined || item.soldPriceDh === ""
+            ? null
+            : Number(item.soldPriceDh),
+        soldBy: item.soldBy || null,
+        saleNotes: item.saleNotes || "",
       }
     })
   } catch {
@@ -247,47 +279,74 @@ function filterPropertiesList(list: Property[], _parsedSearch: ParsedSearch, raw
   )
 }
 
+function getStoredRequests(): ClientRequest[] {
+  try {
+    if (typeof window === "undefined") return []
+    const raw = localStorage.getItem(REQUESTS_STORAGE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
 function Header({
   currentUser,
   onLogin,
   onProfile,
+  onRequests,
 }: {
   currentUser: SavedUser | null
   onLogin: () => void
   onProfile: () => void
+  onRequests: () => void
 }) {
   const userInitial = currentUser?.fullName?.trim()?.charAt(0)?.toUpperCase() || "U"
 
   return (
     <header className="mx-auto mt-4 max-w-md px-4">
-      <div className="flex items-center justify-between rounded-[28px] bg-white px-5 py-4 shadow-[0_12px_30px_rgba(0,0,0,0.08)]">
-        {currentUser ? (
-          <button
-            type="button"
-            onClick={onProfile}
-            className="flex items-center gap-3 rounded-full border border-slate-200 bg-[#f8fafc] px-3 py-2.5 text-[15px] font-bold text-[#06142f]"
-          >
-            <User size={16} />
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#06142f] text-[14px] font-black text-white">
-              {userInitial}
-            </span>
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={onLogin}
-            className="flex items-center gap-2 rounded-full border border-slate-200 px-5 py-3 text-[15px] font-bold text-[#06142f]"
-          >
-            <User size={18} />
-            الدخول
-          </button>
-        )}
+      <div className="rounded-[28px] bg-white px-5 py-4 shadow-[0_12px_30px_rgba(0,0,0,0.08)]">
+        <div className="flex items-center justify-between">
+          {currentUser ? (
+            <button
+              type="button"
+              onClick={onProfile}
+              className="flex items-center gap-3 rounded-full border border-slate-200 bg-[#f8fafc] px-3 py-2.5 text-[15px] font-bold text-[#06142f]"
+            >
+              <User size={16} />
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#06142f] text-[14px] font-black text-white">
+                {userInitial}
+              </span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onLogin}
+              className="flex items-center gap-2 rounded-full border border-slate-200 px-5 py-3 text-[15px] font-bold text-[#06142f]"
+            >
+              <User size={18} />
+              الدخول
+            </button>
+          )}
 
-        <div className="flex items-center gap-3">
-          <h1 className="text-[30px] font-black tracking-tight text-[#06142f]">ImmoMarket</h1>
-          <div className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-gradient-to-br from-[#06142f] to-[#0a2b63] shadow">
-            <span className="text-[18px] font-black text-white">IM</span>
+          <div className="flex items-center gap-3">
+            <h1 className="text-[30px] font-black tracking-tight text-[#06142f]">ImmoMarket</h1>
+            <div className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-gradient-to-br from-[#06142f] to-[#0a2b63] shadow">
+              <span className="text-[18px] font-black text-white">IM</span>
+            </div>
           </div>
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <button
+            type="button"
+            onClick={onRequests}
+            className="inline-flex items-center gap-2 rounded-full bg-[#f8fafc] px-4 py-2.5 text-[13px] font-black text-[#06142f] ring-1 ring-slate-200"
+          >
+            <ClipboardList size={16} />
+            صفحة الطلبات
+          </button>
         </div>
       </div>
     </header>
@@ -304,6 +363,7 @@ function PropertyCard({
   onOpen: (property: Property) => void
 }) {
   const supportDh = getHousingSupportDh(property.supportDh)
+  const soldPrice = property.soldPriceDh ?? null
 
   return (
     <article className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
@@ -312,16 +372,44 @@ function PropertyCard({
           <img
             src={property.image}
             alt={property.title}
-            className="h-[230px] w-full object-cover transition active:scale-[0.99]"
+            className={`h-[230px] w-full object-cover transition active:scale-[0.99] ${
+              property.sold ? "brightness-[0.72]" : ""
+            }`}
           />
+
           <div className="absolute left-3 top-3 rounded-full bg-black/70 px-3 py-1.5 text-[12px] font-black text-white backdrop-blur">
             العقار رقم {index + 1}
           </div>
+
+          {property.sold && (
+            <>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-transparent" />
+              <div className="absolute inset-0 flex items-center justify-center px-4">
+                <div className="rounded-full border border-white/20 bg-[#dc2626]/90 px-6 py-3 text-[20px] font-black text-white shadow-[0_16px_35px_rgba(220,38,38,0.35)] backdrop-blur">
+                  تم بيع العقار
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </button>
 
       <div className="p-5 text-right">
-        <h3 className="text-[21px] font-extrabold leading-snug text-[#06142f]">{property.title}</h3>
+        <div className="flex items-start justify-between gap-3">
+          <div className="text-left">
+            {property.sold ? (
+              <span className="inline-flex items-center rounded-full bg-red-50 px-3 py-1 text-[12px] font-black text-red-700 ring-1 ring-red-100">
+                مباع
+              </span>
+            ) : (
+              <span className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-[12px] font-black text-emerald-700 ring-1 ring-emerald-100">
+                متاح
+              </span>
+            )}
+          </div>
+
+          <h3 className="text-[21px] font-extrabold leading-snug text-[#06142f]">{property.title}</h3>
+        </div>
 
         <div className="mt-4 grid grid-cols-3 gap-3">
           <div className="rounded-[18px] bg-slate-50 px-3 py-4 text-center">
@@ -344,11 +432,30 @@ function PropertyCard({
         </div>
 
         <div className="mt-5 rounded-[20px] bg-[#f8fafc] p-4 text-center ring-1 ring-slate-200">
-          <p className="text-[11px] font-bold text-slate-400">الثمن الأصلي</p>
-          <p className="mt-2 text-[34px] font-black tracking-tight text-[#2563eb]">{property.price}</p>
+          {property.sold ? (
+            <>
+              <p className="text-[11px] font-bold text-slate-400">ثمن الإغلاق</p>
+              <p className="mt-2 text-[30px] font-black tracking-tight text-[#dc2626]">
+                {soldPrice ? formatDh(soldPrice) : property.price}
+              </p>
 
-          {supportDh !== null && supportDh > 0 && (
-            <p className="mt-2 text-[13px] font-black text-green-700">قيمة الدعم: {formatDh(supportDh)}</p>
+              {supportDh !== null && supportDh > 0 && (
+                <p className="mt-2 text-[13px] font-black text-green-700">الدعم: {formatDh(supportDh)}</p>
+              )}
+
+              <p className="mt-3 text-[13px] font-bold text-slate-500">
+                اضغط باش تشوف البدائل أو تسجل الطلب
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-[11px] font-bold text-slate-400">الثمن الأصلي</p>
+              <p className="mt-2 text-[34px] font-black tracking-tight text-[#2563eb]">{property.price}</p>
+
+              {supportDh !== null && supportDh > 0 && (
+                <p className="mt-2 text-[13px] font-black text-green-700">قيمة الدعم: {formatDh(supportDh)}</p>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -806,13 +913,367 @@ function PropertyDetails({
   )
 }
 
+function SoldPropertyRequestPage({
+  property,
+  currentUser,
+  allDistricts,
+  allProperties,
+  onBack,
+  onOpenProperty,
+}: {
+  property: Property
+  currentUser: SavedUser | null
+  allDistricts: string[]
+  allProperties: Property[]
+  onBack: () => void
+  onOpenProperty: (property: Property) => void
+}) {
+  const [name, setName] = useState(currentUser?.fullName || "")
+  const [phone, setPhone] = useState("")
+  const [whatsapp, setWhatsapp] = useState("")
+  const [preferredDistricts, setPreferredDistricts] = useState<string[]>(property.district ? [property.district] : [])
+  const [notes, setNotes] = useState(
+    `أبحث عن عقار مشابه لـ ${property.title}${property.supportDh ? ` ويفضل دعم ${formatDh(Number(property.supportDh))}` : ""}.`
+  )
+  const [submitted, setSubmitted] = useState(false)
+
+  const soldPrice = property.soldPriceDh ?? priceStringToDh(property.price)
+  const supportDh = getHousingSupportDh(property.supportDh)
+
+  const districtOptions = useMemo(() => {
+    const base = allDistricts.length ? allDistricts : [property.district]
+    return Array.from(new Set([property.district, ...base].filter(Boolean)))
+  }, [allDistricts, property.district])
+
+  const similarAvailableProperties = useMemo(() => {
+    const targetSupport = getHousingSupportDh(property.supportDh)
+    const targetPrice = soldPrice
+
+    return allProperties
+      .filter((item) => !item.sold && item.id !== property.id)
+      .filter((item) => {
+        const sameDistrict = item.district === property.district
+        const inPreferred = preferredDistricts.length > 0 ? preferredDistricts.includes(item.district) : false
+        const supportClose =
+          targetSupport === null
+            ? true
+            : Math.abs(Number(getHousingSupportDh(item.supportDh) || 0) - Number(targetSupport)) <= 30000
+
+        const priceDiff = Math.abs(priceStringToDh(item.price) - targetPrice)
+        return (sameDistrict || inPreferred) && supportClose && priceDiff <= 250000
+      })
+      .slice(0, 4)
+  }, [allProperties, property, preferredDistricts, soldPrice])
+
+  function toggleDistrict(item: string) {
+    setPreferredDistricts((prev) =>
+      prev.includes(item) ? prev.filter((d) => d !== item) : [...prev, item]
+    )
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+
+    const payload: ClientRequest = {
+      id: Date.now(),
+      propertyId: property.id,
+      propertyTitle: property.title,
+      propertyDistrict: property.district,
+      propertyCity: property.city,
+      name: name.trim(),
+      phone: phone.trim(),
+      whatsapp: whatsapp.trim(),
+      preferredDistricts,
+      notes: notes.trim(),
+      createdAt: new Date().toISOString(),
+      source: "sold_property_form",
+    }
+
+    if (!payload.name || !payload.phone) {
+      alert("المرجو إدخال الاسم ورقم الهاتف.")
+      return
+    }
+
+    try {
+      const existing = getStoredRequests()
+      localStorage.setItem(REQUESTS_STORAGE_KEY, JSON.stringify([payload, ...existing]))
+      setSubmitted(true)
+    } catch {
+      alert("وقع مشكل أثناء حفظ الطلب.")
+    }
+  }
+
+  return (
+    <main className="mx-auto max-w-md px-4 pb-16 pt-4">
+      <button
+        type="button"
+        onClick={onBack}
+        className="mb-4 flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[14px] font-bold text-[#06142f] shadow"
+      >
+        <ArrowRight size={16} />
+        رجوع
+      </button>
+
+      <section className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+        <div className="relative h-[220px]">
+          <img src={property.image} alt={property.title} className="h-full w-full object-cover brightness-[0.72]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+          <div className="absolute inset-x-0 bottom-4 px-4 text-right text-white">
+            <div className="mb-3 inline-flex rounded-full bg-[#dc2626]/90 px-4 py-2 text-[13px] font-black shadow">
+              تم بيع العقار
+            </div>
+            <h2 className="text-[28px] font-black leading-tight">{property.title}</h2>
+            <p className="mt-2 text-[14px] font-bold text-white/90">
+              {property.district} • {property.city}
+            </p>
+          </div>
+        </div>
+
+        <div className="p-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-[20px] bg-slate-50 p-4 text-center ring-1 ring-slate-200">
+              <p className="text-[11px] font-bold text-slate-400">ثمن الإغلاق</p>
+              <p className="mt-2 text-[22px] font-black text-[#dc2626]">{formatDh(soldPrice)}</p>
+            </div>
+
+            <div className="rounded-[20px] bg-slate-50 p-4 text-center ring-1 ring-slate-200">
+              <p className="text-[11px] font-bold text-slate-400">الدعم</p>
+              <p className="mt-2 text-[22px] font-black text-green-700">
+                {supportDh && supportDh > 0 ? formatDh(supportDh) : "بلا دعم"}
+              </p>
+            </div>
+          </div>
+
+          {similarAvailableProperties.length > 0 && (
+            <div className="mt-4 rounded-[24px] bg-[#f8fafc] p-4 ring-1 ring-slate-200">
+              <div className="mb-3 text-right">
+                <p className="text-[12px] font-black text-slate-400">عقارات مشابهة</p>
+                <h3 className="text-[18px] font-black text-[#06142f]">لقينا بدائل قريبة من طلبك</h3>
+              </div>
+
+              <div className="space-y-3">
+                {similarAvailableProperties.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => onOpenProperty(item)}
+                    className="flex w-full items-center gap-3 rounded-[22px] bg-white p-3 text-right ring-1 ring-slate-200"
+                  >
+                    <img src={item.image} alt={item.title} className="h-20 w-24 rounded-[16px] object-cover" />
+                    <div className="flex-1">
+                      <p className="text-[15px] font-black text-[#06142f]">{item.title}</p>
+                      <p className="mt-1 text-[12px] font-bold text-slate-500">
+                        {item.district} • {item.area} m²
+                      </p>
+                      <p className="mt-2 text-[16px] font-black text-[#2563eb]">{item.price}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="mt-4 rounded-[24px] bg-[#f8fafc] p-4 ring-1 ring-slate-200">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-[16px] font-black text-[#06142f]">طلب عقار بديل</h3>
+              <span className="rounded-full bg-white px-3 py-1 text-[12px] font-black text-slate-500 ring-1 ring-slate-200">
+                بحال فلتر البحث
+              </span>
+            </div>
+
+            {submitted ? (
+              <div className="rounded-[22px] border border-emerald-200 bg-white p-5 text-center">
+                <CheckCircle2 size={34} className="mx-auto text-emerald-600" />
+                <p className="mt-3 text-[18px] font-black text-emerald-800">تسجل الطلب فصفحة الطلبات</p>
+                <p className="mt-2 text-[14px] font-bold leading-7 text-emerald-700">
+                  إلى ماكانش المتوفر مناسب، الطلب ديالك محفوظ دابا داخل التطبيق.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-3 text-right">
+                <div className="col-span-2">
+                  <label className="text-[13px] font-bold text-slate-500">الاسم الكامل</label>
+                  <input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    type="text"
+                    placeholder="الاسم الكامل"
+                    className="mt-1 h-12 w-full rounded-2xl bg-white px-4 ring-1 ring-slate-200 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[13px] font-bold text-slate-500">رقم الهاتف</label>
+                  <input
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    type="tel"
+                    placeholder="06XXXXXXXX"
+                    className="mt-1 h-12 w-full rounded-2xl bg-white px-4 ring-1 ring-slate-200 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[13px] font-bold text-slate-500">واتساب</label>
+                  <input
+                    value={whatsapp}
+                    onChange={(e) => setWhatsapp(e.target.value)}
+                    type="tel"
+                    placeholder="اختياري"
+                    className="mt-1 h-12 w-full rounded-2xl bg-white px-4 ring-1 ring-slate-200 outline-none"
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <label className="text-[13px] font-bold text-slate-500">الأحياء المطلوبة</label>
+                  <div className="mt-2 flex flex-wrap justify-end gap-2 rounded-[22px] bg-white p-3 ring-1 ring-slate-200">
+                    {districtOptions.map((district) => {
+                      const active = preferredDistricts.includes(district)
+                      return (
+                        <button
+                          key={district}
+                          type="button"
+                          onClick={() => toggleDistrict(district)}
+                          className={`rounded-full px-4 py-2 text-[13px] font-black transition ${
+                            active
+                              ? "bg-[#06142f] text-white"
+                              : "bg-[#f8fafc] text-[#06142f] ring-1 ring-slate-200"
+                          }`}
+                        >
+                          {district}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <div className="col-span-2">
+                  <label className="text-[13px] font-bold text-slate-500">ملاحظات الطلب</label>
+                  <textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    rows={4}
+                    placeholder="مثلاً: نفس الثمن، نفس الحي، قرب المسجد..."
+                    className="mt-1 w-full rounded-[22px] bg-white px-4 py-3 ring-1 ring-slate-200 outline-none"
+                  />
+                </div>
+
+                <div className="col-span-2 grid grid-cols-2 gap-3">
+                  <button
+                    type="submit"
+                    className="rounded-full bg-[#06142f] py-3 font-bold text-white"
+                  >
+                    تسجيل الطلب
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={onBack}
+                    className="rounded-full border border-slate-200 bg-white py-3 font-bold"
+                  >
+                    إلغاء
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      </section>
+    </main>
+  )
+}
+
+function RequestsPage({
+  requests,
+  onBack,
+}: {
+  requests: ClientRequest[]
+  onBack: () => void
+}) {
+  return (
+    <main className="mx-auto max-w-md px-4 pb-16 pt-4">
+      <button
+        type="button"
+        onClick={onBack}
+        className="mb-4 flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[14px] font-bold text-[#06142f] shadow"
+      >
+        <ArrowRight size={16} />
+        رجوع
+      </button>
+
+      <section className="rounded-[30px] border border-slate-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+        <div className="mb-4 text-right">
+          <p className="text-[12px] font-black text-slate-400">إدارة الطلبات</p>
+          <h2 className="text-[28px] font-black text-[#06142f]">صفحة الطلبات</h2>
+        </div>
+
+        {requests.length === 0 ? (
+          <div className="rounded-[24px] bg-[#f8fafc] p-5 text-right ring-1 ring-slate-200">
+            <p className="text-[17px] font-black text-[#06142f]">مازال ما كاين حتى طلب</p>
+            <p className="mt-2 text-[14px] font-bold text-slate-500">
+              أي طلب جديد من العقارات المباعة غادي يبان هنا.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {requests.map((request) => (
+              <article
+                key={request.id}
+                className="rounded-[24px] bg-[#f8fafc] p-4 text-right ring-1 ring-slate-200"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-black text-slate-500 ring-1 ring-slate-200">
+                    {new Date(request.createdAt).toLocaleDateString("fr-FR")}
+                  </span>
+                  <div>
+                    <h3 className="text-[18px] font-black text-[#06142f]">{request.name}</h3>
+                    <p className="mt-1 text-[13px] font-bold text-slate-500">
+                      الطلب جا من: {request.propertyTitle}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="rounded-[18px] bg-white p-3 ring-1 ring-slate-200">
+                    <p className="text-[11px] font-bold text-slate-400">الهاتف</p>
+                    <p className="mt-1 text-[14px] font-black text-[#06142f]">{request.phone || "-"}</p>
+                  </div>
+
+                  <div className="rounded-[18px] bg-white p-3 ring-1 ring-slate-200">
+                    <p className="text-[11px] font-bold text-slate-400">واتساب</p>
+                    <p className="mt-1 text-[14px] font-black text-[#06142f]">{request.whatsapp || "-"}</p>
+                  </div>
+                </div>
+
+                <div className="mt-3 rounded-[18px] bg-white p-3 ring-1 ring-slate-200">
+                  <p className="text-[11px] font-bold text-slate-400">الأحياء المطلوبة</p>
+                  <p className="mt-1 text-[14px] font-black text-[#06142f]">
+                    {request.preferredDistricts.length > 0 ? request.preferredDistricts.join("، ") : "غير محدد"}
+                  </p>
+                </div>
+
+                <div className="mt-3 rounded-[18px] bg-white p-3 ring-1 ring-slate-200">
+                  <p className="text-[11px] font-bold text-slate-400">ملاحظات</p>
+                  <p className="mt-1 text-[14px] leading-7 text-[#06142f]">{request.notes || "-"}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+    </main>
+  )
+}
+
 export default function App() {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null)
-  const [currentPage, setCurrentPage] = useState<"home" | "login" | "profile">("home")
+  const [soldRequestProperty, setSoldRequestProperty] = useState<Property | null>(null)
+  const [currentPage, setCurrentPage] = useState<"home" | "login" | "profile" | "requests">("home")
   const [currentUser, setCurrentUser] = useState<SavedUser | null>(null)
   const [query, setQuery] = useState("")
   const [appliedQuery, setAppliedQuery] = useState("")
   const [allProperties, setAllProperties] = useState<Property[]>(seedProperties)
+  const [requests, setRequests] = useState<ClientRequest[]>([])
 
   useEffect(() => {
     const raw = localStorage.getItem("immomarket_current_user")
@@ -823,7 +1284,9 @@ export default function App() {
         localStorage.removeItem("immomarket_current_user")
       }
     }
+
     setAllProperties(getVisibleProperties())
+    setRequests(getStoredRequests())
   }, [])
 
   const handleAuthSuccess = (user: SavedUser) => {
@@ -853,6 +1316,22 @@ export default function App() {
   const handleSearch = () => {
     setAppliedQuery(query.trim())
     setSelectedProperty(null)
+    setSoldRequestProperty(null)
+  }
+
+  const handleOpenProperty = (property: Property) => {
+    if (property.sold) {
+      setSelectedProperty(null)
+      setSoldRequestProperty(property)
+      return
+    }
+
+    setSoldRequestProperty(null)
+    setSelectedProperty(property)
+  }
+
+  const refreshRequests = () => {
+    setRequests(getStoredRequests())
   }
 
   const selectedPropertyNumber = selectedProperty
@@ -880,12 +1359,30 @@ export default function App() {
     )
   }
 
+  if (currentPage === "requests") {
+    return (
+      <div className="min-h-screen bg-[#f3f5fb] text-[#06142f]" dir="rtl">
+        <Header
+          currentUser={currentUser}
+          onLogin={() => setCurrentPage("login")}
+          onProfile={() => setCurrentPage("profile")}
+          onRequests={() => setCurrentPage("requests")}
+        />
+        <RequestsPage requests={requests} onBack={() => setCurrentPage("home")} />
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-[#f3f5fb] text-[#06142f]" dir="rtl">
       <Header
         currentUser={currentUser}
         onLogin={() => setCurrentPage("login")}
         onProfile={() => setCurrentPage("profile")}
+        onRequests={() => {
+          refreshRequests()
+          setCurrentPage("requests")
+        }}
       />
 
       {selectedProperty ? (
@@ -893,6 +1390,21 @@ export default function App() {
           property={selectedProperty}
           propertyNumber={selectedPropertyNumber}
           onBack={() => setSelectedProperty(null)}
+        />
+      ) : soldRequestProperty ? (
+        <SoldPropertyRequestPage
+          property={soldRequestProperty}
+          currentUser={currentUser}
+          allDistricts={availableDistricts}
+          allProperties={allProperties}
+          onBack={() => {
+            refreshRequests()
+            setSoldRequestProperty(null)
+          }}
+          onOpenProperty={(property) => {
+            setSoldRequestProperty(null)
+            setSelectedProperty(property)
+          }}
         />
       ) : (
         <>
@@ -902,6 +1414,7 @@ export default function App() {
             onSearch={handleSearch}
             districts={availableDistricts}
             propertyTypes={availablePropertyTypes}
+            currentUser={currentUser}
           />
 
           <main className="mx-auto mt-5 max-w-md px-4 pb-16">
@@ -930,7 +1443,7 @@ export default function App() {
                     key={property.id}
                     property={property}
                     index={index}
-                    onOpen={setSelectedProperty}
+                    onOpen={handleOpenProperty}
                   />
                 ))}
               </div>
