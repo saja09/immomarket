@@ -7,41 +7,26 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
-      injectRegister: "auto",
-      includeAssets: ["vite.svg", "pwa-192.png", "pwa-512.png"],
       manifest: {
-        name: "ImmoMarket",
-        short_name: "ImmoMarket",
-        description: "ImmoMarket Morocco",
+        name: "Dar DARK Immobilier",
+        short_name: "Dar DARK",
+        description: "Dar DARK Immobilier",
         theme_color: "#06142f",
         background_color: "#f3f5fb",
         display: "standalone",
-        orientation: "portrait",
-        scope: "/",
         start_url: "/",
-        lang: "ar",
-        dir: "rtl",
         icons: [
           {
-            src: "/pwa-192.png",
+            src: "/logo.png",
             sizes: "192x192",
             type: "image/png"
           },
           {
-            src: "/pwa-512.png",
+            src: "/logo.png",
             sizes: "512x512",
             type: "image/png"
-          },
-          {
-            src: "/pwa-512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "maskable"
           }
         ]
-      },
-      devOptions: {
-        enabled: true
       }
     })
   ]
