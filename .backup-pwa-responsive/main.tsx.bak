@@ -1,4 +1,3 @@
-import { registerSW } from "virtual:pwa-register"
 import "leaflet/dist/leaflet.css"
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
@@ -14,11 +13,3 @@ createRoot(document.getElementById("root")!).render(
     {isAdminRoute ? <AdminApp /> : <App />}
   </StrictMode>,
 )
-
-
-registerSW({
-  immediate: true,
-  onRegisteredSW() {
-    console.log("PWA ready")
-  },
-})
