@@ -1,20 +1,15 @@
 import { registerSW } from "virtual:pwa-register"
-import "leaflet/dist/leaflet.css"
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
+import App from "./App"
 import "./index.css"
-import App from "./App.tsx"
-import AdminApp from "./admin/AdminApp.tsx"
-
-const pathname = window.location.pathname
-const isAdminRoute = pathname === "/admin-panel-simo"
+import "leaflet/dist/leaflet.css"
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    {isAdminRoute ? <AdminApp /> : <App />}
+    <App />
   </StrictMode>,
 )
-
 
 registerSW({
   immediate: true,
