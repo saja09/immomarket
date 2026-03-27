@@ -8,7 +8,7 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       injectRegister: "auto",
-      includeAssets: ["vite.svg"],
+      includeAssets: ["vite.svg", "pwa-192.png", "pwa-512.png"],
       manifest: {
         name: "ImmoMarket",
         short_name: "ImmoMarket",
@@ -23,16 +23,20 @@ export default defineConfig({
         dir: "rtl",
         icons: [
           {
-            src: "/vite.svg",
+            src: "/pwa-192.png",
             sizes: "192x192",
-            type: "image/svg+xml",
-            purpose: "any"
+            type: "image/png"
           },
           {
-            src: "/vite.svg",
+            src: "/pwa-512.png",
             sizes: "512x512",
-            type: "image/svg+xml",
-            purpose: "any maskable"
+            type: "image/png"
+          },
+          {
+            src: "/pwa-512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable"
           }
         ]
       },

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import {
   Building2,
   MapPin,
@@ -505,7 +505,22 @@ function PropertyDetails({
 
   const touchStartX = useRef<number | null>(null)
   const touchEndX = useRef<number | null>(null)
-  const lastTapRef = useRef(0)
+
+  useLayoutEffect(() => {
+    const scrollToTop = () => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" })
+      document.documentElement.scrollTop = 0
+      document.body.scrollTop = 0
+    }
+
+    scrollToTop()
+
+    const id = window.requestAnimationFrame(() => {
+      scrollToTop()
+    })
+
+    return () => window.cancelAnimationFrame(id)
+  }, [property.id])
 
   useEffect(() => {
     setActiveIndex(0)
@@ -551,11 +566,7 @@ function PropertyDetails({
   }
 
   const handleImageTap = () => {
-    const now = Date.now()
-    if (now - lastTapRef.current < 280) {
-      setIsFullscreen((prev) => !prev)
-    }
-    lastTapRef.current = now
+    setIsFullscreen((prev) => !prev)
   }
 
   return (
