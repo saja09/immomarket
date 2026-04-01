@@ -1,228 +1,126 @@
-import { useMemo, useState } from "react"
-import { Search, MapPin, Heart } from "lucide-react"
+import { useState } from "react";
+import { Search, Sparkles, Loader2, Building2, CheckCircle, RotateCcw } from "lucide-react";
 
-type SearchBarProps = {
-  value: string
-  onChange: (value: string) => void
-  onSearch: () => void
-  districts: string[]
-  propertyTypes: string[]
-  onOpenMap?: () => void
-  currentUser?: unknown
-}
+export default function SearchBar({ value, onChange, onAiSearch, onFilterChange, districts }: any) {
+  const [loading, setLoading] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
+  
+  const [localFilters, setLocalFilters] = useState({
+    city: "سيدي علال البحراوي",
+    district: "",
+    propertyType: "",
+    minPrice: "",
+    maxPrice: "",
+    supportDh: ""
+  });
 
-export default function SearchBar({
-  value,
-  onChange,
-  onSearch,
-  districts,
-  propertyTypes,
-  onOpenMap = () => {},
-  currentUser,
-}: SearchBarProps) {
-  const [showFilter, setShowFilter] = useState(false)
-  const [district, setDistrict] = useState("")
-  const [propertyType, setPropertyType] = useState("")
-  const [supportType, setSupportType] = useState("")
-  const [minPrice, setMinPrice] = useState("")
-  const [maxPrice, setMaxPrice] = useState("")
+  // إرسال التغييرات فوراً للوجيك الرئيسي
+  const handleFieldChange = (field: string, val: any) => {
+    const next = { ...localFilters, [field]: val };
+    setLocalFilters(next);
+    onFilterChange(next); 
+  };
 
-  const city = "سيدي علال البحراوي"
-
-  const filterQuery = useMemo(() => {
-    const parts: string[] = []
-
-    if (propertyType) parts.push(propertyType)
-    parts.push(`في ${city}`)
-    if (district) parts.push(`حي ${district}`)
-
-    if (minPrice && maxPrice) {
-      parts.push(`ما بين ${minPrice} و ${maxPrice} مليون`)
-    } else if (minPrice) {
-      parts.push(`فوق ${minPrice} مليون`)
-    } else if (maxPrice) {
-      parts.push(`حتى ${maxPrice} مليون`)
-    }
-
-    if (supportType === "100000") parts.push("دعم 10 مليون")
-    if (supportType === "70000") parts.push("دعم 7 مليون")
-    if (supportType === "0") parts.push("بلا دعم")
-
-    return parts.join(" ")
-  }, [city, district, propertyType, supportType, minPrice, maxPrice])
-
-  function applyFilter() {
-    onChange(filterQuery)
-    setShowFilter(false)
-    setTimeout(() => onSearch(), 50)
-  }
-
-  function resetFilter() {
-    setDistrict("")
-    setPropertyType("")
-    setSupportType("")
-    setMinPrice("")
-    setMaxPrice("")
-    onChange("")
-    setTimeout(() => onSearch(), 50)
-  }
+  const handleReset = () => {
+    const reset = { city: "سيدي علال البحراوي", district: "", propertyType: "", minPrice: "", maxPrice: "", supportDh: "" };
+    setLocalFilters(reset);
+    onFilterChange(reset);
+    onChange("");
+  };
 
   return (
-    <section className="mx-auto mt-6 w-full max-w-md sm:max-w-2xl lg:max-w-4xl xl:max-w-6xl px-4">
-      <div className="rounded-[28px] bg-white px-4 py-4 shadow ring-1 ring-slate-200">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onOpenMap}
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f8fafc] text-[#06142f] ring-1 ring-slate-200"
+    <section className="mx-auto mt-6 w-full max-w-md px-4 relative z-[100]">
+      <div className={`relative bg-white rounded-[32px] shadow-xl ring-1 ring-slate-200 transition-all ${showFilter ? 'rounded-b-none border-b-0 shadow-none' : ''}`}>
+        <div className="flex items-center p-2">
+          {/* زر جيمني */}
+          <button 
+            onClick={async () => { 
+              if(!value) return;
+              setLoading(true); await onAiSearch(value); setLoading(false); setShowFilter(false);
+            }} 
+            className="h-11 w-11 flex items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-purple-600 text-white shadow-lg shrink-0 active:scale-90 transition-all"
           >
-            <MapPin size={20} />
+            {loading ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />}
           </button>
 
-          <div className="relative flex-1">
-            <input
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-              onClick={() => setShowFilter(true)}
-              onFocus={() => setShowFilter(true)}
-              type="text"
-              placeholder="ابحث عن مدينة، حي، شقة..."
-              className="h-12 w-full rounded-full bg-[#f8fafc] pr-5 pl-16 text-right outline-none ring-1 ring-slate-200"
-            />
-
-            <div className="absolute left-2 top-1/2 -translate-y-1/2">
-              <button
-                type="button"
-                onClick={onSearch}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#06142f] text-white"
-              >
-                <Search size={17} />
-              </button>
-            </div>
-          </div>
+          {/* خانة البحث: تفتح الفلتر عند التركيز */}
+          <input 
+            value={value} 
+            onChange={(e) => onChange(e.target.value)}
+            onFocus={() => setShowFilter(true)}
+            placeholder="ابحث بالهضرة أو حدد الفلتر..."
+            className="flex-1 bg-transparent px-4 py-3 text-right outline-none font-bold text-[#06142f] text-sm"
+          />
+          <div className="h-10 w-10 flex items-center justify-center text-slate-300 border-r pr-2"><Search size={20} /></div>
         </div>
 
         {showFilter && (
-          <div className="mt-4 rounded-[24px] bg-[#f8fafc] p-4 ring-1 ring-slate-200">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-[16px] font-black text-[#06142f]">فلتر البحث</h3>
+          <div className="absolute top-full left-0 right-0 bg-white border-x border-b border-slate-100 rounded-b-[40px] p-6 shadow-2xl animate-in slide-in-from-top-1 z-[110]">
+             <div className="flex justify-between items-center mb-6 border-b pb-4">
+                <button onClick={() => setShowFilter(false)} className="bg-blue-50 text-blue-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">تـم</button>
+                <h3 className="font-black text-sm text-[#06142f] flex items-center gap-2">تخصيص البحث <Building2 size={16}/></h3>
+             </div>
 
-              <button
-                type="button"
-                onClick={() => setShowFilter(false)}
-                className="rounded-full px-3 py-1 text-[13px] font-bold text-slate-500 ring-1 ring-slate-200"
-              >
-                إغلاق
-              </button>
-            </div>
+             <div className="space-y-5 text-right font-bold">
+                {/* المدينة */}
+                <div className="space-y-1.5">
+                   <label className="text-[10px] font-black text-slate-400 mr-2 uppercase tracking-widest">المدينة</label>
+                   <select value={localFilters.city} onChange={e => handleFieldChange('city', e.target.value)} className="w-full bg-slate-50 border-none rounded-2xl p-4 font-black outline-none text-right appearance-none">
+                     <option value="سيدي علال البحراوي">سيدي علال البحراوي</option>
+                     <option value="الرباط">الرباط</option>
+                     <option value="سلا">سلا</option>
+                     <option value="تمارة">تمارة</option>
+                   </select>
+                </div>
 
-            {currentUser && (
-              <button
-                type="button"
-                className="mb-4 flex w-full items-center justify-center gap-2 rounded-full border border-slate-200 bg-white py-3 font-bold"
-              >
-                المفضلة
-                <Heart size={18} />
-              </button>
-            )}
+                {/* الحي والنوع */}
+                <div className="grid grid-cols-2 gap-3">
+                   <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-400 mr-2 uppercase">الحي</label>
+                      <select value={localFilters.district} onChange={e => handleFieldChange('district', e.target.value)} className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold outline-none text-right appearance-none text-sm">
+                        <option value="">جميع الأحياء</option>
+                        {districts.map((d:string) => <option key={d} value={d}>{d}</option>)}
+                      </select>
+                   </div>
+                   <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-400 mr-2 uppercase tracking-tighter">نوع العقار</label>
+                      <select value={localFilters.propertyType} onChange={e => handleFieldChange('propertyType', e.target.value)} className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold outline-none text-right appearance-none text-sm">
+                        <option value="">الكل</option>
+                        <option value="شقة">شقة</option>
+                        <option value="فيلا">فيلا</option>
+                        <option value="منزل">منزل</option>
+                      </select>
+                   </div>
+                </div>
 
-            <div className="grid grid-cols-2 gap-3 text-right">
-              <div className="col-span-2">
-                <label className="text-[13px] font-bold text-slate-500">المدينة</label>
-                <input
-                  value={city}
-                  readOnly
-                  className="h-12 w-full rounded-2xl bg-white px-4 ring-1 ring-slate-200"
-                />
-              </div>
+                {/* الأثمنة (من اليمين إلى اليسار) */}
+                <div className="grid grid-cols-2 gap-3">
+                   <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-400 mr-2 uppercase text-right">الثمن من (مليون)</label>
+                      <input type="number" value={localFilters.minPrice} onChange={e => handleFieldChange('minPrice', e.target.value)} className="w-full bg-slate-50 border-none rounded-2xl p-4 text-center font-black outline-none" placeholder="أدنى" />
+                   </div>
+                   <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-400 mr-2 uppercase text-right">الثمن إلى (مليون)</label>
+                      <input type="number" value={localFilters.maxPrice} onChange={e => handleFieldChange('maxPrice', e.target.value)} className="w-full bg-slate-50 border-none rounded-2xl p-4 text-center font-black outline-none" placeholder="أقصى" />
+                   </div>
+                </div>
 
-              <div>
-                <label className="text-[13px] font-bold text-slate-500">الحي</label>
-                <select
-                  value={district}
-                  onChange={(e) => setDistrict(e.target.value)}
-                  className="h-12 w-full rounded-2xl bg-white px-4 ring-1 ring-slate-200"
-                >
-                  <option value="">جميع الأحياء</option>
-                  {districts.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="text-[13px] font-bold text-slate-500">نوع العقار</label>
-                <select
-                  value={propertyType}
-                  onChange={(e) => setPropertyType(e.target.value)}
-                  className="h-12 w-full rounded-2xl bg-white px-4 ring-1 ring-slate-200"
-                >
-                  <option value="">جميع الأنواع</option>
-                  {propertyTypes.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="text-[13px] font-bold text-slate-500">الثمن من</label>
-                <input
-                  type="number"
-                  value={minPrice}
-                  onChange={(e) => setMinPrice(e.target.value)}
-                  className="h-12 w-full rounded-2xl bg-white px-4 ring-1 ring-slate-200"
-                />
-              </div>
-
-              <div>
-                <label className="text-[13px] font-bold text-slate-500">الثمن إلى</label>
-                <input
-                  type="number"
-                  value={maxPrice}
-                  onChange={(e) => setMaxPrice(e.target.value)}
-                  className="h-12 w-full rounded-2xl bg-white px-4 ring-1 ring-slate-200"
-                />
-              </div>
-
-              <div className="col-span-2">
-                <label className="text-[13px] font-bold text-slate-500">نوع الدعم</label>
-                <select
-                  value={supportType}
-                  onChange={(e) => setSupportType(e.target.value)}
-                  className="h-12 w-full rounded-2xl bg-white px-4 ring-1 ring-slate-200"
-                >
-                  <option value="">الكل</option>
-                  <option value="100000">دعم 10 مليون</option>
-                  <option value="70000">دعم 7 مليون</option>
-                  <option value="0">بلا دعم</option>
-                </select>
-              </div>
-
-              <div className="col-span-2 grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={applyFilter}
-                  className="rounded-full bg-[#06142f] py-3 font-bold text-white"
-                >
-                  تطبيق
-                </button>
-
-                <button
-                  type="button"
-                  onClick={resetFilter}
-                  className="rounded-full border border-slate-200 py-3 font-bold"
-                >
-                  مسح
-                </button>
-              </div>
-            </div>
+                {/* نوع الدعم */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-slate-400 mr-2 uppercase">الدعم السكني</label>
+                  <select value={localFilters.supportDh} onChange={e => handleFieldChange('supportDh', e.target.value)} className="w-full bg-slate-50 border-none rounded-2xl p-4 font-black text-[#06142f] outline-none text-right appearance-none">
+                    <option value="">الكل</option>
+                    <option value="100000">دعم 10 مليون</option>
+                    <option value="70000">دعم 7 مليون</option>
+                    <option value="0">بدون دعم</option>
+                  </select>
+                </div>
+                
+                <button onClick={handleReset} className="w-full mt-4 bg-slate-50 text-slate-400 py-4 rounded-2xl font-black text-sm border border-slate-100 flex items-center justify-center gap-2 active:scale-95 transition-all">مسح كافة الفلاتر <RotateCcw size={14}/></button>
+             </div>
           </div>
         )}
       </div>
     </section>
-  )
+  );
 }
