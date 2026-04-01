@@ -6,7 +6,6 @@ import AdminApp from "./admin/AdminApp"
 import AdminLogin from "./admin/AdminLogin"
 import "./index.css"
 
-// حماية الداشبورد
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const isAdmin = localStorage.getItem("isAdmin") === "true";
   if (!isAdmin) return <Navigate to="/admin-login" replace />;
@@ -17,21 +16,10 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
-        {/* صفحة الزوار (السيت اللي فيه 15 عقار و جيمني) */}
-        <Route path="/*" element={<App />} />
-        
-        {/* صفحة دخول الإدارة */}
+        <Route path="/" element={<App />} />
         <Route path="/admin-login" element={<AdminLogin />} />
-        
-        {/* لوحة التحكم (Admin Dashboard) */}
-        <Route 
-          path="/admin-dashboard/*" 
-          element={
-            <ProtectedRoute>
-              <AdminApp />
-            </ProtectedRoute>
-          } 
-        />
+        <Route path="/admin-dashboard/*" element={<ProtectedRoute><AdminApp /></ProtectedRoute>} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>
